@@ -1,0 +1,241 @@
+
+\documentclass{beamer}
+
+\mode<presentation> {
+
+
+
+%\usetheme{Darmstadt}
+%\usetheme{Dresden}
+\usetheme{Singapore}
+%\usetheme{Szeged}
+%\usetheme{Warsaw}
+
+%\usecolortheme{albatross}
+%\usecolortheme{beaver}
+%\usecolortheme{beetle}
+%\usecolortheme{crane}
+%\usecolortheme{dolphin}
+%\usecolortheme{dove}
+%\usecolortheme{fly}
+%\usecolortheme{lily}
+%\usecolortheme{orchid}
+%\usecolortheme{rose}
+%\usecolortheme{seagull}
+%\usecolortheme{seahorse}
+%\usecolortheme{whale}
+%\usecolortheme{wolverine}
+
+%\setbeamertemplate{footline} % To remove the footer line in all slides uncomment this line
+%\setbeamertemplate{footline}[page number] % To replace the footer line in all slides with a simple slide count uncomment this line
+
+%\setbeamertemplate{navigation symbols}{} % To remove the navigation symbols from the bottom of all slides uncomment this line
+}
+
+\usepackage{graphicx} % Allows including images
+\usepackage{booktabs} % Allows the use of \toprule, \midrule and \bottomrule in tables
+
+\usepackage{hyperref}
+\usepackage{graphicx}
+\graphicspath{ {images/} }
+\usepackage{xcolor}
+
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE
+%----------------------------------------------------------------------------------------
+
+\title[MARL]{Multiagent Reinforcement Learning:
+	Rollout and Policy Iteration
+	(Bertsekas, 2020)} 
+\author{Mikalai Korbit} % Your name
+
+\institute[IMT] % Your institution as it will appear on the bottom of every slide, may be shorthand to save space
+{
+IMT School for Advanced Studies Lucca %\\ % Your institution for the title page
+%\medskip
+%\textit{todo@outlook.com} % Your email address
+}
+\date{\today} % Date, can be changed to a custom date
+
+\begin{document}
+
+\begin{frame}
+\titlepage % Print the title page as the first slide
+\end{frame}
+
+\begin{frame}
+\frametitle{Outline} % Table of contents slide, comment this block out to remove it
+\tableofcontents % Throughout your presentation, if you choose to use \section{} and \subsection{} commands, these will automatically be printed on this slide as an overview of your presentation
+\end{frame}
+
+
+
+%----------------------------------------------------------------------------------------
+%	PRESENTATION SLIDES
+%----------------------------------------------------------------------------------------
+
+
+%------------------------------------------------
+\section{Introduction} 
+%------------------------------------------------
+
+\begin{frame}
+	
+\frametitle{Sidenote -- Path Integral Control}
+TODO
+
+\begin{itemize}
+\item TODO
+
+\end{itemize}
+
+\end{frame}
+
+
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{Motivation}
+
+\begin{block}{TODO}
+TODO. 
+\end{block}
+
+
+\end{frame}
+
+
+%------------------------------------------------
+
+\begin{frame}
+	\frametitle{Outline}
+	\begin{block}{TODO}
+		TODO
+	\end{block}
+
+\end{frame}
+
+
+%------------------------------------------------
+
+
+
+
+
+
+%------------------------------------------------
+\section{Brief Overveiw of MARL}
+%------------------------------------------------
+
+
+
+\begin{frame}
+\frametitle{Reinforcement Learning Problem}
+\begin{itemize}
+	\item Learning how to map situations to actions 
+	\item Trial-and-error search
+	\item Delayed feedback
+	\item Trade-off between exploration and exploitation
+	\item Sequential decision making
+	\item Agent's actions affect the subsequent data it receives
+\end{itemize}
+\end{frame}
+
+
+
+%------------------------------------------------
+\section{Multiagent Rollout}
+%------------------------------------------------
+
+\begin{frame}
+	\frametitle{Reinforcement Learning Problem}
+	\begin{itemize}
+		\item Learning how to map situations to actions 
+		\item Trial-and-error search
+		\item Delayed feedback
+		\item Trade-off between exploration and exploitation
+		\item Sequential decision making
+		\item Agent's actions affect the subsequent data it receives
+	\end{itemize}
+\end{frame}
+
+
+%------------------------------------------------
+\section{Extensions}
+%------------------------------------------------
+
+\begin{frame}
+	\frametitle{Reinforcement Learning Problem}
+	\begin{itemize}
+		\item Learning how to map situations to actions 
+		\item Trial-and-error search
+		\item Delayed feedback
+		\item Trade-off between exploration and exploitation
+		\item Sequential decision making
+		\item Agent's actions affect the subsequent data it receives
+	\end{itemize}
+\end{frame}
+
+
+
+
+
+%------------------------------------------------
+
+\section{Conclusion}
+
+\begin{frame}
+\frametitle{Conclusion}
+\begin{itemize}
+	\item RL methods can be applicable to
+	a wide variety of problems
+	
+	\item Out-of-the-box models work but 
+	require fine-tuning and take 
+	longer to converge
+	
+	\item Simple methods like state discretization
+	are worth exploring when training speed and
+	solution complexity are of the essence 
+	
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{References}
+\footnotesize{
+\begin{thebibliography}{5} 
+	
+\bibitem{rl1}\label{rl_book}
+Reinforcement learning: an introduction, 2nd Edition. 
+Richard S. Sutton, Andrew G. Barto. 
+
+\bibitem{rl2}\label{ucl_course}
+Reinforcement learning lectures by David Silver. UCL.
+\url{http://www0.cs.ucl.ac.uk/staff/d.silver/web/Teaching.html} 
+
+\bibitem{rl3}\label{deepmind}
+Playing Atari with Deep Reinforcement Learning. Mnih et al.
+\url{https://arxiv.org/abs/1312.5602}
+
+
+\end{thebibliography}
+}
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+
+\begin{center}
+	\Huge Thanks for
+	\\
+	your attention!
+\end{center}
+
+\end{frame}
+
+%----------------------------------------------------------------------------------------
+
+\end{document}
