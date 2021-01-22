@@ -1,20 +1,22 @@
-import gym
-import ma_gym  # registers new envs on import
 import time
 
-env = gym.make('PredatorPrey10x10-v4')
+import gym
 
-done_n = [False for _ in range(env.n_agents)]
-ep_reward = 0
+import ma_gym  # register new envs on import
+from agents.constants import SpiderAndFlyEnv
 
-obs_n = env.reset()
+if __name__ == '__main__':
+    # create Spider-and-Fly game
+    env = gym.make(SpiderAndFlyEnv)
 
-# while not all(done_n):
-for i in range(100):
-    env.render()
-    obs_n, reward_n, done_n, info = env.step(env.action_space.sample())
-    ep_reward += sum(reward_n)
+    # init env
+    obs_n = env.reset()
 
-    time.sleep(0.1)
+    # run 100 episodes for a random agent
+    for i in range(10):
+        env.render()
+        obs_n, reward_n, done_n, info = env.step(env.action_space.sample())
 
-env.close()
+        time.sleep(1.0)
+
+    env.close()

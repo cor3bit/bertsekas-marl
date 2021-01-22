@@ -39,12 +39,12 @@ class PredatorPrey(gym.Env):
 
     def __init__(
             self,
-            grid_shape=(5, 5),
+            grid_shape=(10, 10),
             n_agents=2,
             n_preys=1,
-            prey_move_probs=(0.175, 0.175, 0.175, 0.175, 0.3),
-            full_observable=False,
-            penalty=-0.5,
+            prey_move_probs=(0.2, 0.2, 0.2, 0.2, 0.2),
+            full_observable=True,
+            penalty=5,  # initially -0.5; here we assume no penalty for catching the prey solo
             step_cost=-0.01,
             prey_capture_reward=5,
             max_steps=100):
@@ -74,9 +74,11 @@ class PredatorPrey(gym.Env):
         mask_size = np.prod(self._agent_view_mask)
         self._obs_high = np.array([1., 1.] + [1.] * mask_size + [1.0])
         self._obs_low = np.array([0., 0.] + [0.] * mask_size + [0.0])
+
         if self.full_observable:
             self._obs_high = np.tile(self._obs_high, self.n_agents)
             self._obs_low = np.tile(self._obs_low, self.n_agents)
+
         self.observation_space = MultiAgentObservationSpace(
             [spaces.Box(self._obs_low, self._obs_high) for _ in range(self.n_agents)])
 
