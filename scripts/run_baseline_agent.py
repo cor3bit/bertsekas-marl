@@ -4,7 +4,7 @@ import gym
 import ma_gym  # register new envs on import
 
 from agents.constants import SpiderAndFlyEnv
-from agents.random_agent import RandomAgent
+from agents.baseline_agent import BaselineAgent
 
 if __name__ == '__main__':
     # create Spider-and-Fly game
@@ -15,7 +15,7 @@ if __name__ == '__main__':
 
     # init agents
     n_agents = env.n_agents
-    agents = [RandomAgent(env.action_space[i]) for i in range(n_agents)]
+    agents = [BaselineAgent(env.observation_space[i], env.action_space[i], False) for i in range(n_agents)]
 
     # init stopping condition
     done_n = [False] * n_agents
@@ -34,7 +34,4 @@ if __name__ == '__main__':
 
         time.sleep(0.1)
 
-
     env.close()
-
-

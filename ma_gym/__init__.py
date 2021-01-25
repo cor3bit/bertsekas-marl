@@ -22,6 +22,8 @@ register(
     id='{}-v4'.format(_game_name),
     entry_point='ma_gym.envs.predator_prey:PredatorPrey',
     kwargs={
-        'grid_shape': grid_shape, 'n_agents': n_agents, 'n_preys': n_preys, 'full_observable': True,
+        'grid_shape': grid_shape,
+        'n_agents': n_agents,
+        'n_preys': n_preys,
     }
 )
