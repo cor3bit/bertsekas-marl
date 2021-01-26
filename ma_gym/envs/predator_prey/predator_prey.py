@@ -323,9 +323,10 @@ class PredatorPrey(gym.Env):
                 modified_agent_pos = self._apply_action(agent_curr_pos, action)
                 if modified_agent_pos is not None:
                     for j, p_pos in self.prey_pos.items():
-                        # calc MD
-                        md = np.abs(p_pos[0] - modified_agent_pos[0]) + np.abs(p_pos[1] - modified_agent_pos[1])
-                        a_distances[action, j] = md
+                        if self._prey_alive[j]:
+                            # calc MD
+                            md = np.abs(p_pos[0] - modified_agent_pos[0]) + np.abs(p_pos[1] - modified_agent_pos[1])
+                            a_distances[action, j] = md
 
             distances.append(a_distances)
 
