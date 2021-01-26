@@ -309,6 +309,45 @@ class PredatorPrey(gym.Env):
             self.viewer.close()
             self.viewer = None
 
+    def get_distances(self):
+        distances = []
+
+        n_actions = len(ACTION_MEANING)
+
+        for agent_curr_pos in self.agent_pos.values():
+            # initialize to inf (max distance)
+            a_distances = np.full(shape=(n_actions, self.n_preys), fill_value=np.inf, dtype=np.float)
+
+            for action in ACTION_MEANING:
+                # apply selected action  to the current position
+                modified_agent_pos = self._apply_action(agent_curr_pos, action)
+                if modified_agent_pos is not None:
+                    for j, p_pos in self.prey_pos.items():
+                        # calc MD
+                        md = np.abs(p_pos[0] - modified_agent_pos[0]) + np.abs(p_pos[1] - modified_agent_pos[1])
+                        a_distances[action, j] = md
+
+            distances.append(a_distances)
+
+        return distances
+
+    def _apply_action(self, curr_pos, move):
+        # curr_pos = copy.copy(self.agent_pos[agent_i])
+        if move == 0:  # down
+            next_pos = [curr_pos[0] + 1, curr_pos[1]]
+        elif move == 1:  # left
+            next_pos = [curr_pos[0], curr_pos[1] - 1]
+        elif move == 2:  # up
+            next_pos = [curr_pos[0] - 1, curr_pos[1]]
+        elif move == 3:  # right
+            next_pos = [curr_pos[0], curr_pos[1] + 1]
+        elif move == 4:  # no-op
+            next_pos = [curr_pos[0], curr_pos[1]]
+        else:
+            raise Exception('Action Not found!')
+
+        return next_pos if self.is_valid(next_pos) else None
+
 
 AGENT_COLOR = ImageColor.getcolor('blue', mode='RGB')
 AGENT_NEIGHBORHOOD_COLOR = (186, 238, 247)

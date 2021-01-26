@@ -15,7 +15,8 @@ if __name__ == '__main__':
 
     # init agents
     n_agents = env.n_agents
-    agents = [BaselineAgent(env.observation_space[i], env.action_space[i], False) for i in range(n_agents)]
+    n_preys = env.n_preys
+    agents = [BaselineAgent(i, n_agents, n_preys, env.action_space[i]) for i in range(n_agents)]
 
     # init stopping condition
     done_n = [False] * n_agents
@@ -24,14 +25,22 @@ if __name__ == '__main__':
     while not all(done_n):
         env.render()
 
+        # for each agent calculates Manhattan Distance to each prey for each
+        # possible action
+        # O(n*m*q)
+        distances = env.get_distances()
+
         # all agents act based on the observation
         act_n = []
-        for agent, obs in zip(agents, obs_n):
-            act_n.append(agent.act(obs))
+        for agent, obs, action_distances in zip(agents, obs_n, distances):
+            act_n.append(agent.act(action_distances))
 
         # update step ->
         obs_n, reward_n, done_n, info = env.step(act_n)
 
         time.sleep(0.1)
+
+    env.render()
+    time.sleep(2.)
 
     env.close()
