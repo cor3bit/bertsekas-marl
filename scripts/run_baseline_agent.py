@@ -38,7 +38,7 @@ if __name__ == '__main__':
         # update step ->
         obs_n, reward_n, done_n, info = env.step(act_n)
 
-        time.sleep(0.1)
+        time.sleep(0.2)
 
     env.render()
     time.sleep(2.)
