@@ -38,6 +38,22 @@
 \graphicspath{ {images/} }
 \usepackage{xcolor}
 
+
+
+
+\AtBeginSection[]{
+	\begin{frame}
+		\vfill
+		\centering
+		\begin{beamercolorbox}[sep=8pt,center,shadow=true,rounded=true]{title}
+			\usebeamerfont{title}\insertsectionhead\par%
+		\end{beamercolorbox}
+		\vfill
+	\end{frame}
+}
+
+
+
 %----------------------------------------------------------------------------------------
 %	TITLE PAGE
 %----------------------------------------------------------------------------------------
@@ -125,6 +141,7 @@ Rollout and Policy Iteration
         \begin{itemize}
             \item Actions of one agent influence other agents' rewards
             \item Communication problem
+            \item Fully cooperative, fully info sharing (DP) vs. partial info sharing
             \item Curse of dimensionality (more severe than in RL)
         \end{itemize}
 
@@ -262,18 +279,184 @@ Rollout and Policy Iteration
     \section{Multiagent Rollout}
 %------------------------------------------------
 
-    \begin{frame}
-        \frametitle{TODO}
-        \begin{itemize}
-            \item Cooperative $P1_F$
 
-        \end{itemize}
+    \begin{frame}
+	\frametitle{Key Ideas}
+	
+	
+        \begin{block}{Deal with the exponential increase in the action space}
+	$\rightarrow$ Introduce a form of sequential
+	agent-by-agent one-step lookahead minimization --
+	\textit{multiagent rollout}
+	
+\end{block}
+
+\begin{block}{Compute the agent actions in parallel}
+	$\rightarrow$ Decouple sequential 
+	agent-by-agent computation with \textit{precomputed
+		signaling policy} that embodies agent coordination
+\end{block}	
+	
+	
+
+	\end{frame}
+
+
+%------------------------------------------------
+
+
+
+    \begin{frame}
+        \frametitle{The Setting}
+        
+        \begin{itemize}
+			\item $P2_F$ -- stochastic discrete-time optimal control problem over a finite horizon, with perfect information on the state
+			\item Fully cooperative
+			\item Tested in Spiders-And-Flies environment
+		\end{itemize}
+	
+	$$x_{k+1}=f_{k}\left(x_{k}, u_{k}, w_{k}\right), \quad k=0,1, \ldots, N-1$$
+	
+	$$J_{\pi}\left(x_{0}\right)=E\left\{g_{N}\left(x_{N}\right)+\sum_{k=0}^{N-1} g_{k}\left(x_{k}, \mu_{k}\left(x_{k}\right), w_{k}\right)\right\}$$
+	
+	
     \end{frame}
 
 
 %------------------------------------------------
 
 
+    \begin{frame}
+	\frametitle{Policy Iteration and Rollout}
+	
+    \begin{figure}
+		\includegraphics[scale=0.65]{2a_pi}
+		\caption{Policy Iteration Algorithm. Source: Bertsekas (2020)}
+	\end{figure}
+	
+	
+	\begin{itemize}
+		\item Fundamental property: policy improvement
+		$$J_{k, \tilde{\pi}}\left(x_{k}\right) \leq J_{k, \pi}\left(x_{k}\right), \quad \forall x_{k}, k$$
+		
+	\end{itemize}
+	
+	\end{frame}
+
+
+%------------------------------------------------
+
+
+\begin{frame}
+	\frametitle{All-at-once Rollout}
+	
+	\begin{itemize}
+		\item Rollout is one-time policy iteration
+
+$$
+\begin{aligned}
+\tilde{u}_{k} \in \arg \min _{u_{k} \in U_{k}\left(x_{k}\right)} E\left\{g_{k}\left(x_{k}, u_{k}, w_{k}\right) + \right.\\
+&\left.+J_{k+1, \pi}\left(f_{k}\left(x_{k}, u_{k}, w_{k}\right)\right)\right\}
+\end{aligned}
+$$
+
+		\item Rollout is an on-line algorithm and possesses robustness property 
+		\item Rollout suffers from dimensionality curse problem when 
+		the action space is large (eg. exponential in the number of agents)
+		
+	\end{itemize}
+	
+\end{frame}
+
+%------------------------------------------------
+
+
+\begin{frame}
+	\frametitle{One-at-a-time Rollout}
+	
+    \begin{figure}
+	\includegraphics[scale=0.4]{2b}
+	\caption{One-at-a-time action selection. Source: Bertsekas (2020)}
+	\end{figure}	
+	
+		
+	\begin{enumerate}
+		\item Break down $u_k$ into the sequence of $m$ actions: 
+		$u^1_k, u^2_k, ..., u^m_k$
+		
+		\item Introduce artificial states $\left(x_{k}, u_{k}^{1}\right),\left(x_{k}, u_{k}^{1}, u_{k}^{2}\right), \ldots,\left(x_{k}, u_{k}^{1}, \ldots, u_{k}^{m-1}\right)$
+		\item $u^m_k$ marks the transition to the new state 
+		$x_{k+1}=f(x_k, u_k, w_k)$ incurring cost $g_k(x_k, u_k, w_k)$
+	\end{enumerate}
+
+
+	
+\end{frame}
+
+
+%------------------------------------------------
+
+    \begin{frame}
+	\frametitle{Benefits of the Multiagent Rollout Algorithm}
+	
+			Past controls determined by
+		the rollout policy, and the future controls determined by
+		the base policy!
+	
+	
+	
+	\begin{itemize}
+		\item Reducing the action space by increasing the state space. Reasonable since Q-factor minimization is performed for just
+		one state at each stage. 	
+		
+		\item We reduce the computation complexity 
+		from $O(q^m)$ to $O(qm)$, $q=|U|$
+	\end{itemize}
+	
+	
+	\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+	\frametitle{Policy Improvement for Multiagent Rollout}
+	
+	Claim: multi-agent rollout performs about as well as
+	standard rollout (all-at-once)
+	
+	Proof: TODO 	
+	
+	
+	
+\end{frame}
+
+%------------------------------------------------
+    \begin{frame}
+    	
+	\frametitle{Ordering of Agents}
+	
+	
+	
+	\begin{itemize}
+		\item Instead of random order, at each step
+	\end{itemize}
+	
+	
+	\end{frame}
+
+
+
+
+
+
+
+
+
+
+
+
+
+%------------------------------------------------
     \section{Extensions}
 %------------------------------------------------
 
