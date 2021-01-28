@@ -16,8 +16,9 @@ for spec in env_specs:
     )
 
 # registers env adapted from Bertsekas (2020)
-grid_shape, n_agents, n_preys = [(10, 10), 2, 1]
-_game_name = 'PredatorPrey{}x{}'.format(grid_shape[0], grid_shape[1])
+grid_shape, n_agents, n_preys = [(15, 15), 4, 2]
+# _game_name = 'PredatorPrey{}x{}'.format(grid_shape[0], grid_shape[1])
+_game_name = 'PredatorPrey10x10'
 register(
     id='{}-v4'.format(_game_name),
     entry_point='ma_gym.envs.predator_prey:PredatorPrey',

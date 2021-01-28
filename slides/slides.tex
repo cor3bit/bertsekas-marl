@@ -1,13 +1,11 @@
-
 \documentclass{beamer}
 
 \mode<presentation> {
 
 
-
 %\usetheme{Darmstadt}
 %\usetheme{Dresden}
-\usetheme{Singapore}
+    \usetheme{Singapore}
 %\usetheme{Szeged}
 %\usetheme{Warsaw}
 
@@ -32,11 +30,11 @@
 %\setbeamertemplate{navigation symbols}{} % To remove the navigation symbols from the bottom of all slides uncomment this line
 }
 
-\usepackage{graphicx} % Allows including images
-\usepackage{booktabs} % Allows the use of \toprule, \midrule and \bottomrule in tables
 
+\usepackage{booktabs} % Allows the use of \toprule, \midrule and \bottomrule in tables
 \usepackage{hyperref}
-\usepackage{graphicx}
+
+\usepackage{graphicx} % Allows including images
 \graphicspath{ {images/} }
 \usepackage{xcolor}
 
@@ -45,13 +43,13 @@
 %----------------------------------------------------------------------------------------
 
 \title[MARL]{Multiagent Reinforcement Learning:
-	Rollout and Policy Iteration
-	(Bertsekas, 2020)} 
+Rollout and Policy Iteration
+    (Bertsekas, 2020)}
 \author{Mikalai Korbit} % Your name
 
 \institute[IMT] % Your institution as it will appear on the bottom of every slide, may be shorthand to save space
 {
-IMT School for Advanced Studies Lucca %\\ % Your institution for the title page
+    IMT School for Advanced Studies Lucca %\\ % Your institution for the title page
 %\medskip
 %\textit{todo@outlook.com} % Your email address
 }
@@ -59,15 +57,14 @@ IMT School for Advanced Studies Lucca %\\ % Your institution for the title page
 
 \begin{document}
 
-\begin{frame}
-\titlepage % Print the title page as the first slide
-\end{frame}
+    \begin{frame}
+        \titlepage % Print the title page as the first slide
+    \end{frame}
 
-\begin{frame}
-\frametitle{Outline} % Table of contents slide, comment this block out to remove it
-\tableofcontents % Throughout your presentation, if you choose to use \section{} and \subsection{} commands, these will automatically be printed on this slide as an overview of your presentation
-\end{frame}
-
+    \begin{frame}
+        \frametitle{Outline} % Table of contents slide, comment this block out to remove it
+        \tableofcontents % Throughout your presentation, if you choose to use \section{} and \subsection{} commands, these will automatically be printed on this slide as an overview of your presentation
+    \end{frame}
 
 
 %----------------------------------------------------------------------------------------
@@ -76,165 +73,280 @@ IMT School for Advanced Studies Lucca %\\ % Your institution for the title page
 
 
 %------------------------------------------------
-\section{Introduction} 
+
+
+    \section{MARL Overview}
+%------------------------------------------------
+
+
+
+
+    \begin{frame}
+        \frametitle{Motivation}
+
+        \begin{block}{Multi-agent systems are ubiquitous}
+            Eg. fleet of drones, factory robots, self-driving cars.
+        \end{block}
+
+        \begin{block}{Recent advances in RL applications}
+            Eg. AlphaGo/AlphaZero, playing Starcraft, robotic control.
+        \end{block}
+
+        \begin{block}{Utilize modern computer architecture and software frameworks}
+            Eg. cloud computing, stacks of graphics cards, TPUs;
+            PyTorch, OpenAI gyms.
+        \end{block}
+
+        \begin{block}{Benefits of modeling a problem as MARL}
+            Scalability, robustness, faster learning through experience sharing,
+            parallel computation.
+        \end{block}
+
+    \end{frame}
+
+
+
+%------------------------------------------------
+
+
+    \begin{frame}
+        \frametitle{Multi-Agent Reinforcement Learning Problem}
+        Inherits Reinforcement Learning characteristics:
+        \begin{itemize}
+            \item Learning how to map situations into actions
+            \item Trial-and-error search
+            \item Delayed feedback
+            \item Trade-off between exploration and exploitation
+            \item Sequential decision making
+            \item Agent's actions affect the subsequent data it receives
+        \end{itemize}
+
+        Adds multi-agent features:
+        \begin{itemize}
+            \item Actions of one agent influence other agents' rewards
+            \item Communication problem
+            \item Curse of dimensionality (more severe than in RL)
+        \end{itemize}
+
+    \end{frame}
+
+
 %------------------------------------------------
 
 \begin{frame}
+	\frametitle{``Bertsekas Dictionary''}
 	
-\frametitle{Sidenote -- Path Integral Control}
-TODO
-
-\begin{itemize}
-\item TODO
-
-\end{itemize}
-
-\end{frame}
-
-
-%------------------------------------------------
-
-\begin{frame}
-\frametitle{Motivation}
-
-\begin{block}{TODO}
-TODO. 
-\end{block}
-
-
-\end{frame}
-
-
-%------------------------------------------------
-
-\begin{frame}
-	\frametitle{Outline}
-	\begin{block}{TODO}
-		TODO
-	\end{block}
-
-\end{frame}
-
-
-%------------------------------------------------
-
-
-
-
-
-
-%------------------------------------------------
-\section{Brief Overveiw of MARL}
-%------------------------------------------------
-
-
-
-\begin{frame}
-\frametitle{Reinforcement Learning Problem}
-\begin{itemize}
-	\item Learning how to map situations to actions 
-	\item Trial-and-error search
-	\item Delayed feedback
-	\item Trade-off between exploration and exploitation
-	\item Sequential decision making
-	\item Agent's actions affect the subsequent data it receives
-\end{itemize}
-\end{frame}
-
-
-
-%------------------------------------------------
-\section{Multiagent Rollout}
-%------------------------------------------------
-
-\begin{frame}
-	\frametitle{Reinforcement Learning Problem}
+	Aligns optimal control definitions with the RL-world:
 	\begin{itemize}
-		\item Learning how to map situations to actions 
-		\item Trial-and-error search
-		\item Delayed feedback
-		\item Trade-off between exploration and exploitation
-		\item Sequential decision making
-		\item Agent's actions affect the subsequent data it receives
+		\item Maximize value $\rightarrow$ minimize cost		
+		\item Agent $\rightarrow$ Decision maker or controller
+		\item Action $\rightarrow$ Decision or control
+		\item Environment  $\rightarrow$ Dynamic system
+		\item Learning $\rightarrow$ Solving a DP-related problem using simulation
+		\item Self-learning (self-play) $\rightarrow$ Solving a DP problem using simulation-based policy iteration
+		\item Planning vs Learning distinction $\rightarrow$ Solving a DP problem with model-based vs model-free simulation	
 	\end{itemize}
+	
 \end{frame}
 
 
 %------------------------------------------------
-\section{Extensions}
-%------------------------------------------------
-
-\begin{frame}
-	\frametitle{Reinforcement Learning Problem}
-	\begin{itemize}
-		\item Learning how to map situations to actions 
-		\item Trial-and-error search
-		\item Delayed feedback
-		\item Trade-off between exploration and exploitation
-		\item Sequential decision making
-		\item Agent's actions affect the subsequent data it receives
-	\end{itemize}
-\end{frame}
 
 
+    \begin{frame}
+        \frametitle{Multi-Agent MDP}
 
+        \begin{figure}
+            \includegraphics[scale=0.65]{1a_marl}
+            \caption{MARL Problem. Source: Sadhu, Konar (2020)}
+        \end{figure}
 
+        \begin{itemize}
+            \item All agents see the global state $s$
+            \item Individual actions: $u^{a} \in U$
+            \item State transitions: $P\left(s^{\prime} \mid s, \mathbf{u}\right): S \times \mathbf{U} \times S \rightarrow[0,1]$
+            \item Shared team reward: $S \times \mathbf{U} \rightarrow \mathbb{R}$ 
+            
+            
+        \end{itemize}
 
-%------------------------------------------------
+    \end{frame}
 
-\section{Conclusion}
-
-\begin{frame}
-\frametitle{Conclusion}
-\begin{itemize}
-	\item RL methods can be applicable to
-	a wide variety of problems
-	
-	\item Out-of-the-box models work but 
-	require fine-tuning and take 
-	longer to converge
-	
-	\item Simple methods like state discretization
-	are worth exploring when training speed and
-	solution complexity are of the essence 
-	
-\end{itemize}
-\end{frame}
-
-
-\begin{frame}
-\frametitle{References}
-\footnotesize{
-\begin{thebibliography}{5} 
-	
-\bibitem{rl1}\label{rl_book}
-Reinforcement learning: an introduction, 2nd Edition. 
-Richard S. Sutton, Andrew G. Barto. 
-
-\bibitem{rl2}\label{ucl_course}
-Reinforcement learning lectures by David Silver. UCL.
-\url{http://www0.cs.ucl.ac.uk/staff/d.silver/web/Teaching.html} 
-
-\bibitem{rl3}\label{deepmind}
-Playing Atari with Deep Reinforcement Learning. Mnih et al.
-\url{https://arxiv.org/abs/1312.5602}
-
-
-\end{thebibliography}
-}
-\end{frame}
 
 %------------------------------------------------
 
-\begin{frame}
 
-\begin{center}
-	\Huge Thanks for
-	\\
-	your attention!
-\end{center}
+    \begin{frame}
+        \frametitle{Taxonomy}
 
-\end{frame}
+        \begin{block}{Cooperative}
+            \begin{itemize}
+                \item The goal of cooperative agents is to achieve a common objective
+                \item Coordination problem
+            \end{itemize}
+        \end{block}
+
+        \begin{block}{Competitive}
+            \begin{itemize}
+                \item Zero-sum games (eg. chess, tic-tac-toe)
+                \item Minimax equilibria
+            \end{itemize}
+        \end{block}
+
+        \begin{block}{Mixed}
+            \begin{itemize}
+                \item  General-sum games (win-win, lose-lose scenarios;
+                eg. pollution model, ``what movie to watch?'')
+                \item  Nash equilibria
+            \end{itemize}
+        \end{block}
+
+    \end{frame}
+
+%------------------------------------------------
+
+
+    \begin{frame}
+        \frametitle{Algorithms for Cooperative MARL}
+
+        \begin{block}{Static games}
+            \begin{itemize}
+                \item JAL (Joint Action Learners)
+                \item FMQ (Frequency Maximum Q-value)
+            \end{itemize}
+
+        \end{block}
+
+        \begin{block}{Dynamic games}
+            \begin{itemize}
+                \item Team-Q
+                \item Distributed-Q
+                \item OAL (Optimal Adaptive Learning)
+                \item SCQL (Sparse Cooperative Q-learning )
+                \item SQL (Sequential Q-learning)
+                \item FMRQ (Frequency of the maximum reward Q-learning)
+            \end{itemize}
+        \end{block}
+
+    \end{frame}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+%------------------------------------------------
+
+
+    \section{Multiagent Rollout}
+%------------------------------------------------
+
+    \begin{frame}
+        \frametitle{TODO}
+        \begin{itemize}
+            \item Cooperative $P1_F$
+
+        \end{itemize}
+    \end{frame}
+
+
+%------------------------------------------------
+
+
+    \section{Extensions}
+%------------------------------------------------
+
+    \begin{frame}
+        \frametitle{Reinforcement Learning Problem}
+        \begin{itemize}
+            \item Learning how to map situations to actions
+            \item Trial-and-error search
+            \item Delayed feedback
+            \item Trade-off between exploration and exploitation
+            \item Sequential decision making
+            \item Agent's actions affect the subsequent data it receives
+        \end{itemize}
+    \end{frame}
+
+
+%------------------------------------------------
+
+
+    \section{Conclusion}
+
+    \begin{frame}
+        \frametitle{Conclusion}
+        \begin{itemize}
+            \item RL methods can be applicable to
+            a wide variety of problems
+
+            \item Out-of-the-box models work but
+            require fine-tuning and take
+            longer to converge
+
+            \item Simple methods like state discretization
+            are worth exploring when training speed and
+            solution complexity are of the essence
+
+        \end{itemize}
+    \end{frame}
+
+
+    \begin{frame}
+        \frametitle{References}
+        \footnotesize{
+            \begin{thebibliography}{10}
+
+                \bibitem{bert20}\label{bert20}
+                Dimitri Bertsekas -- Multiagent Reinforcement Learning: Rollout and Policy Iteration (2020). Web:
+                \url{https://web.mit.edu/dimitrib/www/Multiagent_Sinica_2020.pdf}
+
+                \bibitem{whiteson20}\label{whiteson20}
+                Shimon Whiteson -- Factored Value Functions for Cooperative Multi-Agent Reinforcement Learning (2020) [Seminar].
+
+
+                \bibitem{sadhu20}\label{sadhu20}
+                Arup Kumar Sadhu, Amit Konar --
+                Multi-Agent Coordination,
+                A Reinforcement Learning Approach (2020).
+
+
+            \end{thebibliography}
+        }
+    \end{frame}
+
+%------------------------------------------------
+
+    \begin{frame}
+
+        \begin{center}
+            \Huge Thanks for
+            \\
+            your attention!
+        \end{center}
+
+    \end{frame}
 
 %----------------------------------------------------------------------------------------
 
