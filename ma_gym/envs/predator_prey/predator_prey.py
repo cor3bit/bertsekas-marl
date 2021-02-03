@@ -37,7 +37,7 @@ class PredatorPrey(gym.Env):
             prey_move_probs=(0.2, 0.2, 0.2, 0.2, 0.2),
             # penalty=1,  # initially -0.5; here we assume no penalty for catching the prey solo
             step_cost=-1,
-            prey_capture_reward=1,
+            prey_capture_reward=0,
             max_steps=200):
         self._grid_shape = grid_shape
         self.n_agents = n_agents
