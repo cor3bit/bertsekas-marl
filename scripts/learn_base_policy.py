@@ -1,3 +1,5 @@
+from time import perf_counter
+
 import numpy as np
 import gym
 import torch
@@ -5,19 +7,28 @@ import torch.nn as nn
 import torch.optim as optim
 import ma_gym  # register new envs on import
 
-from agents.constants import SpiderAndFlyEnv, BaselineModelPath
+from agents.constants import SpiderAndFlyEnv, BaselineModelPath_10x10_4v2
 from agents.baseline_agent import BaselineAgent
 from agents.qnetwork import QNetwork
 
-N_SAMPLES = 100
+N_AGENTS = 4
+N_PREY = 2
 
 
-# BATCH_SIZE = 16
+N_SAMPLES = 1_000_000
+
+BATCH_SIZE = 128
+
+EPOCHS = 10
+
+SEED = 42
+
+
 # data_train = DataLoader(dataset = data, batch_size = BATCH_SIZE, shuffle =False)
 # criterion = nn.MSELoss()
 
 
-def generate_samples():
+def generate_samples(n_samples, seed):
     print('Started sample generation.')
 
     samples = []
@@ -25,7 +36,9 @@ def generate_samples():
     # create Spider-and-Fly game
     env = gym.make(SpiderAndFlyEnv)
 
-    while len(samples) < N_SAMPLES:
+    env.seed(seed)
+
+    while len(samples) < n_samples:
         # init env
         obs_n = env.reset()
 
@@ -51,16 +64,11 @@ def generate_samples():
                 agent_ohe[i] = 1.
 
                 min_prey = a_dist.min(axis=1)
-                size_action_space = min_prey.size
-                for j, d in enumerate(min_prey):
-                    if d != np.inf:
-                        action_ohe = np.zeros(shape=(size_action_space,), dtype=np.float)
-                        action_ohe[j] = 1.
 
-                        x = np.concatenate((obs_first, agent_ohe, action_ohe))
-                        y = -d
+                x = np.concatenate((obs_first, agent_ohe))
+                y = -min_prey
 
-                        samples.append((x, y))
+                samples.append((x, y))
 
             # all agents act based on the observation
             act_n = []
@@ -78,19 +86,27 @@ def generate_samples():
     return samples[:N_SAMPLES]
 
 
-def train_qnetwork():
+def train_qnetwork(samples):
     print('Started Training.')
 
-    net = QNetwork()
+    net = QNetwork(N_AGENTS, N_PREY)
+
+    net.train()  # check
 
     criterion = nn.MSELoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
-    for epoch in range(2):  # loop over the dataset multiple times
+    optimizer = optim.Adam(net.parameters(), lr=0.01)
+
+    data_loader = torch.utils.data.DataLoader(samples,
+                                              batch_size=BATCH_SIZE,
+                                              shuffle=True)
+
+    for epoch in range(EPOCHS):  # loop over the dataset multiple times
 
         running_loss = 0.0
+        n_batches = 0
 
-        for i, data in enumerate(trainloader, 0):
+        for i, data in enumerate(data_loader, 0):
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data
 
@@ -98,26 +114,65 @@ def train_qnetwork():
             optimizer.zero_grad()
 
             # forward + backward + optimize
-            outputs = net(inputs)
-            loss = criterion(outputs, labels)
+            outputs = net(inputs.float())
+
+            loss = criterion(outputs.float(), labels.float())
+
             loss.backward()
+
             optimizer.step()
 
             # print statistics
             running_loss += loss.item()
-            if i % 2000 == 1999:  # print every 2000 mini-batches
-                print('[%d, %5d] loss: %.3f' %
-                      (epoch + 1, i + 1, running_loss / 2000))
-                running_loss = 0.0
+            n_batches += 1
+
+            # if i % 200 == 199:  # print every 2000 mini-batches
+            #     print('[%d, %5d] loss: %.3f' %
+            #           (epoch + 1, i + 1, running_loss / 200))
+            #
+            #     running_loss = 0.0
+
+        if epoch % 10 == 0:
+            torch.save(net.state_dict(), BaselineModelPath_10x10_4v2)
+
+        print(f'[{epoch}] {running_loss / n_batches:.3f}.')
 
     print('Finished Training.')
 
     return net
 
 
+def test_qnetwork(net, samples):
+    net.eval()
+
+    data_loader = torch.utils.data.DataLoader(samples,
+                                              batch_size=BATCH_SIZE,
+                                              shuffle=True)
+
+    # with torch.no_grad():
+    #     for x, y in test_samples:
+    #         net
+
+
 if __name__ == '__main__':
-    samples = generate_samples()
+    # fix seed
+    np.random.seed(SEED)
+    torch.manual_seed(SEED)
 
-    net = train_qnetwork()
+    # run experiment
+    t1 = perf_counter()
+    train_samples = generate_samples(N_SAMPLES, SEED)
 
-    torch.save(net.state_dict(), BaselineModelPath)
+    t2 = perf_counter()
+    net = train_qnetwork(train_samples)
+    t3 = perf_counter()
+
+    # test
+    # test_samples = generate_samples(1000, 1)
+    # test_qnetwork(net, test_samples)
+
+    # save
+    torch.save(net.state_dict(), BaselineModelPath_10x10_4v2)
+
+    print(f'Generated samples in {(t2 - t1) / 60.:.2f} min.')
+    print(f'Trained in {(t3 - t2) / 60.:.2f} min.')

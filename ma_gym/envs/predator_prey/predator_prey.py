@@ -108,17 +108,22 @@ class PredatorPrey(gym.Env):
     def get_agent_obs(self):
         _obs = []
 
+        # all agents' position
         for agent_i in range(self.n_agents):
             pos = self.agent_pos[agent_i]
             _agent_i_obs = [pos[0] / (self._grid_shape[0] - 1), pos[1] / (self._grid_shape[1] - 1)]  # coordinates
 
             _obs.append(_agent_i_obs)
 
+        # all preys' position
         for prey_j in range(self.n_preys):
             pos = self.prey_pos[prey_j]
             _prey_j_obs = [pos[0] / (self._grid_shape[0] - 1), pos[1] / (self._grid_shape[1] - 1)]  # coordinates
 
             _obs.append(_prey_j_obs)
+
+        # alive status fro prey
+        _obs.append([1. if alive else 0. for alive in self._prey_alive])
 
         # same observations for all agents
         _obs = np.array(_obs).flatten().tolist()
@@ -316,7 +321,7 @@ class PredatorPrey(gym.Env):
 
         for agent_curr_pos in self.agent_pos.values():
             # initialize to inf (max distance)
-            a_distances = np.full(shape=(n_actions, self.n_preys), fill_value=np.inf, dtype=np.float)
+            a_distances = np.full(shape=(n_actions, self.n_preys), fill_value=np.inf, dtype=np.float32)
 
             for action in ACTION_MEANING:
                 # apply selected action  to the current position
@@ -327,6 +332,16 @@ class PredatorPrey(gym.Env):
                             # calc MD
                             md = np.abs(p_pos[0] - modified_agent_pos[0]) + np.abs(p_pos[1] - modified_agent_pos[1])
                             a_distances[action, j] = md
+
+            # post-processing: replace dist from invalid moves (inf) with distance of MAX+1
+            for col in a_distances.T:
+                if np.inf in col and not np.all(col == np.inf):
+                    max_dist = np.max(col[col != np.inf])
+                    col[col == np.inf] = max_dist + 1
+
+            # check that to action yields (inf, inf)
+            has_inf = np.all(a_distances == np.inf, axis=1)
+            assert True not in has_inf
 
             distances.append(a_distances)
 

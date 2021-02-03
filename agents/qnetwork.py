@@ -1,27 +1,29 @@
-import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 
 class QNetwork(nn.Module):
-    def __init__(self):
+    def __init__(self, n_agents, m_preys):
         super(QNetwork, self).__init__()
 
-        self.fc1 = nn.Linear(21, 16)
-        self.b1 = nn.BatchNorm1d(16)
-        self.fc2 = nn.Linear(16, 8)
-        self.b2 = nn.BatchNorm1d(8)
-        self.fc3 = nn.Linear(8, 4)
-        self.b3 = nn.BatchNorm1d(4)
-        self.fc4 = nn.Linear(4, 1)
+        # coords of agents & preys + alive status + OHE vector of agents
+        input_dims = (n_agents + m_preys) * 2 + m_preys + n_agents
+
+        self.net = nn.Sequential(
+            nn.Linear(input_dims, 64),
+            nn.BatchNorm1d(64),
+            nn.ReLU(),
+
+            nn.Linear(64, 128),
+            nn.BatchNorm1d(128),
+            nn.ReLU(),
+
+            nn.Linear(128, 64),
+            nn.BatchNorm1d(64),
+            nn.ReLU(),
+
+            nn.Linear(64, 5),
+        )
 
     def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = self.b1(x)
-        x = F.relu(self.fc2(x))
-        x = self.b2(x)
-        x = F.relu(self.fc3(x))
-        x = self.b3(x)
-        x = self.fc4(x)
-
+        x = self.net(x)
         return x

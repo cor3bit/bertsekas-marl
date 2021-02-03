@@ -15,7 +15,8 @@ if __name__ == '__main__':
 
     # init agents
     n_agents = env.n_agents
-    agents = [BaselineAgentNn(i, n_agents, env.action_space[i]) for i in range(n_agents)]
+    n_preys = env.n_preys
+    agents = [BaselineAgentNn(i, n_agents, n_preys, env.action_space[i]) for i in range(n_agents)]
 
     # init stopping condition
     done_n = [False] * n_agents
@@ -27,12 +28,13 @@ if __name__ == '__main__':
         # all agents act based on the observation
         act_n = []
         for agent, obs in zip(agents, obs_n):
-            act_n.append(agent.act(obs))
+            best_action = agent.act(obs)
+            act_n.append(best_action)
 
         # update step ->
         obs_n, reward_n, done_n, info = env.step(act_n)
 
-        time.sleep(0.2)
+        time.sleep(0.5)
 
     env.render()
     time.sleep(2.)
