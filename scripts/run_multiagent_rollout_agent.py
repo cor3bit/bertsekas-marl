@@ -1,7 +1,7 @@
 import gym
 
 from agents.constants import SpiderAndFlyEnv
-from agents.rollout_agent import RolloutAgent
+from agents.rollout_multiagent_agent import RolloutAgent
 
 
 def train_robot():
