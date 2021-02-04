@@ -264,6 +264,9 @@ class PredatorPrey(gym.Env):
 
         return self.get_agent_obs(), rewards, self._agent_dones, {'prey_alive': self._prey_alive}
 
+    def substep(self, agent_id, action):
+        raise NotImplementedError
+
     def __get_neighbour_coordinates(self, pos):
         neighbours = []
         if self.is_valid([pos[0] + 1, pos[1]]):
