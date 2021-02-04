@@ -44,6 +44,7 @@ class PredatorPrey(gym.Env):
         self.n_preys = n_preys
         self._max_steps = max_steps
         self._step_count = None
+        self._substep_count = 0
         # self._penalty = penalty
         self._step_cost = step_cost
         self._prey_capture_reward = prey_capture_reward
@@ -265,7 +266,46 @@ class PredatorPrey(gym.Env):
         return self.get_agent_obs(), rewards, self._agent_dones, {'prey_alive': self._prey_alive}
 
     def substep(self, agent_id, action):
-        raise NotImplementedError
+        self._substep_count += 1
+
+        # one agent moves
+        if not (self._agent_dones[agent_id]):
+            self.__update_agent_pos(agent_id, action)
+
+        is_full_step = self._substep_count % self.n_agents == 0
+
+        # Partial Step -> update only one agent's position
+        if not is_full_step:
+            return self.get_agent_obs(), None, None, None
+        # Full Step -> update prey, recalculate rewards
+        else:
+            self._step_count += 1
+
+            rewards = [self._step_cost for _ in range(self.n_agents)]
+
+            # all preys move
+            for prey_i in range(self.n_preys):
+                if self._prey_alive[prey_i]:
+                    _move = self.np_random.choice(len(self._prey_move_probs), 1, p=self._prey_move_probs)[0]
+                    self.__update_prey_pos(prey_i, _move)
+
+                    # recalculate alive status + add reward if caught
+                    prey_j_pos = self.prey_pos[prey_i]
+                    for agent_i, agent_pos in self.agent_pos.items():
+                        # do not add several rewards if caught by multiple agents
+                        if self._prey_alive[prey_i]:
+                            if prey_j_pos[0] == agent_pos[0] and prey_j_pos[1] == agent_pos[1]:
+                                self._prey_alive[prey_i] = False
+                                rewards[agent_i] += self._prey_capture_reward
+
+            if (self._step_count >= self._max_steps) or (True not in self._prey_alive):
+                for i in range(self.n_agents):
+                    self._agent_dones[i] = True
+
+            for i in range(self.n_agents):
+                self._total_episode_reward[i] += rewards[i]
+
+            return self.get_agent_obs(), rewards, self._agent_dones, {'prey_alive': self._prey_alive}
 
     def __get_neighbour_coordinates(self, pos):
         neighbours = []
