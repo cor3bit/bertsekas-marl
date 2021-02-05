@@ -10,11 +10,15 @@ class QNetworkRollout(nn.Module):
         input_dims = (n_agents + m_preys) * 2 + m_preys + n_agents + n_agents
 
         self.net = nn.Sequential(
-            nn.Linear(input_dims, 64),
-            nn.BatchNorm1d(64),
+            nn.Linear(input_dims, 128),
+            nn.BatchNorm1d(128),
             nn.ReLU(),
 
-            nn.Linear(64, 128),
+            nn.Linear(128, 256),
+            nn.BatchNorm1d(256),
+            nn.ReLU(),
+
+            nn.Linear(256, 128),
             nn.BatchNorm1d(128),
             nn.ReLU(),
 

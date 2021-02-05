@@ -5,7 +5,7 @@ import gym
 import ma_gym  # register new envs on import
 
 from agents.constants import SpiderAndFlyEnv
-from agents.rollout_multiagent_agent import MultiagetRolloutAgent
+from agents.rollout_agent import RolloutAgent
 
 if __name__ == '__main__':
     # create Spider-and-Fly game
@@ -18,7 +18,7 @@ if __name__ == '__main__':
     # init agents
     n_agents = env.n_agents
     n_preys = env.n_preys
-    agents = [MultiagetRolloutAgent(i, n_agents, n_preys, env.action_space[i]) for i in range(n_agents)]
+    agents = [RolloutAgent(i, n_agents, n_preys, env.action_space[i]) for i in range(n_agents)]
 
     # init stopping condition
     done_n = [False] * n_agents

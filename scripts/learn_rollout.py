@@ -11,13 +11,13 @@ import ma_gym  # register new envs on import
 
 from agents.constants import SpiderAndFlyEnv, RolloutModelPath_10x10_4v2
 from agents.baseline_agent_nn import BaselineAgentNn
-from agents.qnetwork_multiagent_rollout import QNetworkRollout
+from agents.qnetwork_rollout import QNetworkRollout
 
 N_AGENTS = 4
 N_PREY = 2
 
-N_SAMPLES = 100_000
-EPOCHS = 100
+N_SAMPLES = 400_000
+EPOCHS = 200
 BATCH_SIZE = 128
 
 SEED = 42

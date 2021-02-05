@@ -1,11 +1,11 @@
 import numpy as np
 import torch
 
-from agents.qnetwork_multiagent_rollout import QNetworkRollout
+from agents.qnetwork_rollout import QNetworkRollout
 from agents.constants import RolloutModelPath_10x10_4v2
 
 
-class MultiagetRolloutAgent:
+class RolloutAgent:
     def __init__(self, agent_id, n_agents, n_preys, action_space, qnet_name=None):
         self.id = agent_id
         self._n_agents = n_agents
