@@ -224,24 +224,30 @@ Rollout and Policy Iteration
 
 
     \begin{frame}
-        \frametitle{Algorithms for Cooperative MARL}
+        \frametitle{First Attempts to Solve MARL}
 
-        \begin{block}{Static games}
+        \begin{block}{Independent Q-Learning (Tan 93)}
             \begin{itemize}
-                \item JAL (Joint Action Learners)
-                \item FMQ (Frequency Maximum Q-value)
+                \item Each agent learns its own Q-function
+                \item Each agent treats the other agents as part of the environment
+                \item Independent Q-learning update rule for agent $a$:
+                $$
+                Q\left(s_{t}, u_{t}^{a}\right) \leftarrow Q\left(s_{t}, u_{t}^{a}\right)+\alpha\left[r_{t}+\gamma \max _{u} Q\left(s_{t+1}, u\right)-Q\left(s_{t}, u_{t}^{a}\right)\right]
+                $$
+                
             \end{itemize}
 
         \end{block}
 
-        \begin{block}{Dynamic games}
+        \begin{block}{Coordinated Q-Learning (Guestrin et al. 02)}
             \begin{itemize}
-                \item Team-Q
-                \item Distributed-Q
-                \item OAL (Optimal Adaptive Learning)
-                \item SCQL (Sparse Cooperative Q-learning )
-                \item SQL (Sequential Q-learning)
-                \item FMRQ (Frequency of the maximum reward Q-learning)
+                \item Stationary learning of joint value function 
+                $Q_{t o t}(s, \mathbf{u})$
+                \item Factorize to improve scalability:
+                $$
+                Q_{t o t}(s, \mathbf{u})=\sum_{e=1}^{E} Q_{e}\left(s^{e}, \mathbf{u}^{e}\right)
+                $$
+
             \end{itemize}
         \end{block}
 
@@ -343,27 +349,64 @@ Rollout and Policy Iteration
 	
 	\end{frame}
 
+%------------------------------------------------
+
+\begin{frame}
+	\frametitle{Standard Rollout Algorithm}
+	
+	\begin{itemize}
+	\item Rollout is one-time policy iteration
+	\item Start with the initial
+	state $x0$, and generate a trajectory:
+	
+	$$
+	\left\{x_{0}, \tilde{u}_{0}, x_{1}, \tilde{u}_{1}, \ldots, x_{N-1}, \tilde{u}_{N-1}, x_{N}\right\}
+	$$
+	
+	Where  $\tilde{u}_{k}$ is 
+		
+	$$
+	\begin{aligned}
+	\tilde{u}_{k} \in \arg \min _{u_{k} \in U_{k}\left(x_{k}\right)} E\left\{g_{k}\left(x_{k}, u_{k}, w_{k}\right) + \right.\\
+	&\left.+J_{k+1, \pi}\left(f_{k}\left(x_{k}, u_{k}, w_{k}\right)\right)\right\}
+	\end{aligned}
+	$$
+	
+	\item Defines rollout policy that 
+	possesses \textbf{cost improvement property}
+	and \textbf{robustness property} (can adapt to 
+	changes in data distributions online)
+	
+	\item Works when argmin over small set of $U$!
+	
+	
+\end{itemize}
+	
+	
+\end{frame}
+
+
 
 %------------------------------------------------
 
 
 \begin{frame}
-	\frametitle{All-at-once Rollout}
+	\frametitle{Standard Rollout for MA Case (All-at-once Rollout)}
 	
 	\begin{itemize}
-		\item Rollout is one-time policy iteration
+		\item The control constraint set becomes 
+		the Cartesian product
 
 $$
-\begin{aligned}
-\tilde{u}_{k} \in \arg \min _{u_{k} \in U_{k}\left(x_{k}\right)} E\left\{g_{k}\left(x_{k}, u_{k}, w_{k}\right) + \right.\\
-&\left.+J_{k+1, \pi}\left(f_{k}\left(x_{k}, u_{k}, w_{k}\right)\right)\right\}
-\end{aligned}
+U_{k}\left(x_{k}\right)=U_{k}^{1}\left(x_{k}\right) \times \cdots \times U_{k}^{m}\left(x_{k}\right)
 $$
 
-		\item Rollout is an on-line algorithm and possesses robustness property 
-		\item Rollout suffers from dimensionality curse problem when 
-		the action space is large (eg. exponential in the number of agents)
-		
+		\item Argmin is now computed over $q^m$! (where $q$ is an upper bound to the number of
+		controls in $U_{k}$, $m$ is the number of agents)
+
+		\item Idea: trade-off control space complexity 
+		with state space complexity
+
 	\end{itemize}
 	
 \end{frame}
@@ -371,8 +414,11 @@ $$
 %------------------------------------------------
 
 
+
+
+
 \begin{frame}
-	\frametitle{One-at-a-time Rollout}
+	\frametitle{One-at-a-time Rollout (Multiagent Rollout)}
 	
     \begin{figure}
 	\includegraphics[scale=0.4]{2b}
@@ -411,24 +457,46 @@ $$
 		
 		\item We reduce the computation complexity 
 		from $O(q^m)$ to $O(qm)$, $q=|U|$
+		
+		\item In addition to that, solves coordination.
+		problem.
+		
+		\item Preserves \textbf{cost improvement property} 
+		(see Bertsekas, part II.D 
+		for proof by induction for $m=2$).
+		
 	\end{itemize}
 	
 	
 	\end{frame}
 
-%------------------------------------------------
 
-\begin{frame}
-	\frametitle{Policy Improvement for Multiagent Rollout}
+
+%------------------------------------------------
+    \begin{frame}
+	\frametitle{Multiagent Rollout Assumptions}
 	
-	Claim: multi-agent rollout performs about as well as
-	standard rollout (all-at-once)
-	
-	Proof: TODO 	
-	
+	\begin{enumerate}
+		\item All agents have access to the current state $x_k$;
+		
+		\item There is an order in which agents compute and apply
+		their local controls;
+		
+		\item There is ``intercommunication'' between agents, 
+		so that agent $l$ knows the local controls 
+		$u_k^1, u_k^2, ..., u_k^{l-1}$ 
+		computed by the
+		predecessor agents 	$1, 2, ..., l-1$ 
+		in the given order.
+	\end{enumerate}
 	
 	
 \end{frame}
+
+
+
+
+%------------------------------------------------
 
 %------------------------------------------------
     \begin{frame}
@@ -438,7 +506,22 @@ $$
 	
 	
 	\begin{itemize}
-		\item Instead of random order, at each step
+		\item Instead of predefined or random order, 
+		at each step $k$ optimize over single 
+		agent's Q-factors.
+		
+		\item Simulate $m$ sequences where each agent 
+		acts first, select the one with minimal Q-factor,
+		``compete'' for the second place with $m-1$ agents,
+		etc.
+				 
+		\item Total number of minimizations:
+		$$
+		m+(m-1)+\cdots+1=\frac{m(m+1)}{2}
+		$$
+		
+		 
+		\item Computations can be parallelized.
 	\end{itemize}
 	
 	
@@ -460,38 +543,145 @@ $$
     \section{Extensions}
 %------------------------------------------------
 
+
+
     \begin{frame}
-        \frametitle{Reinforcement Learning Problem}
+	\frametitle{Approximate Policy Iteration with Agent-by-Agent Policy Improvement}
+	
+	\begin{figure}
+		\includegraphics[scale=0.55]{3a_api}
+		\caption{Approximate Policy Iteration. Source: Bertsekas (2020)}
+	\end{figure}
+	
+	
+	\begin{itemize}
+		\item Approximate policy improvement property: With approximations, policy improvement holds approximately
+		\item If a single policy iteration is done (rollout), no need to train value and policy networks
+		\item Multiple policy iterations can be done only with off-line training
+	
+	\end{itemize}
+\end{frame}
+
+
+%------------------------------------------------
+
+
+    \begin{frame}
+        \frametitle{Parallel Computation of Agents' Controls}
         \begin{itemize}
-            \item Learning how to map situations to actions
-            \item Trial-and-error search
-            \item Delayed feedback
-            \item Trade-off between exploration and exploitation
-            \item Sequential decision making
-            \item Agent's actions affect the subsequent data it receives
+            \item Reminder: parallel computation vs. action coordination.
+                        
+            \item First Attempt: since the agent $l$
+            does not know the 
+            rollout controls for the agents $1, ..., l − 1$, 
+            uses
+            the controls $\mu_{k}^{1}\left(x_{k}\right), \ldots, \mu_{k}^{\ell-1}\left(x_{k}\right)$ of the base policy in their
+            place.
+            
+            \item Drawback: does not preserve cost improvement property. 
+                        
         \end{itemize}
     \end{frame}
 
 
 %------------------------------------------------
 
+\begin{frame}
+	\frametitle{Autonomous Multiagent Rollout}
+	\begin{itemize}
+		\item Second Attempt: assume that once the agents know the
+		state, they use precomputed approximations to the control
+		components of the preceding agents, and compute their own
+		control components in parallel and asynchronously -- 
+		\textbf{autonomous multiagent rollout}.
+		
+		
+		\item How to compute approximations? Train a neural network 
+		off-line training  with training samples generated
+		through the rollout policy -- \textbf{signaling policy}.
+		
+				
+		\item Use base and signaling policies 
+		to generate a rollout policy 
+		$\tilde{\pi}=\left\{\tilde{\mu}_{0}, \ldots, \tilde{\mu}_{N-1}\right\}$
+		autonomously in parallel.
+		
+	\end{itemize}
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{Autonomous Multiagent Rollout Mechanics}
+
+$$
+\begin{array}{c}
+\tilde{\mu}_{k}^{1}\left(x_{k}\right) \in \arg \min _{u_{k}^{1} \in U_{k}^{1}\left(x_{k}\right)} E\left\{g_{k}\left(x_{k}, u_{k}^{1}, \mu_{k}^{2}\left(x_{k}\right),\right.\right. \\
+\left.\ldots, \mu_{k}^{m}\left(x_{k}\right), w_{k}\right) \\
++J_{k+1, \pi}\left(f_{k}\left(x_{k}, u_{k}^{1}, \mu_{k}^{2}\left(x_{k}\right)\right.\right. \\
+\left.\left.\left.\ldots, \mu_{k}^{m}\left(x_{k}\right), w_{k}\right)\right)\right\} \\
+\tilde{\mu}_{k}^{2}\left(x_{k}\right) \in \arg \min _{u_{k}^{2} \in U_{k}^{2}\left(x_{k}\right)} E\left\{g_{k}\left(x_{k}, \widehat{\mu}_{k}^{1}\left(x_{k}\right), u_{k}^{2}\right.\right. \\
+\left.\ldots, \mu_{k}^{m}\left(x_{k}\right), w_{k}\right) \\
++J_{k+1, \pi}\left(f_{k}\left(x_{k}, \widehat{\mu}_{k}^{1}\left(x_{k}\right), u_{k}^{2}\right.\right. \\
+\left.\left.\left.\ldots, \mu_{k}^{m}\left(x_{k}\right), w_{k}\right)\right)\right\} \\
+\ldots & \ldots \\
+\qquad \begin{array}{c}
+\mu_{k}^{m}\left(x_{k}\right) \in \arg \min _{u_{k}^{m} \in U_{k}^{m}\left(x_{k}\right)} E\left\{g_{k}\left(x_{k}, \widehat{\mu}_{k}^{1}\left(x_{k}\right)\right.\right. \\
+\left.\ldots, \widehat{\mu}_{k}^{m-1}\left(x_{k}\right), u_{k}^{m}, w_{k}\right)
+\end{array} \\
++J_{k+1, \pi}\left(f_{k}\left(x_{k}, \widehat{\mu}_{k}^{1}\left(x_{k}\right)\right.\right. \\
+\left.\left.\left.\ldots, \widehat{\mu}_{k}^{m-1}\left(x_{k}\right), u_{k}^{m}, w_{k}\right)\right)\right\}
+\end{array}
+$$
+
+\end{frame}
+
+%------------------------------------------------
+
+
+
+\begin{frame}
+\frametitle{Synchronized Autonomous Multiagent Rollout}
+	
+	\begin{itemize}
+		\item What if we allow periodic updates 
+		of the signaling policies?
+		
+	\end{itemize}
+	
+	
+\begin{figure}
+	\includegraphics[scale=0.65]{3b_idea}
+\end{figure}
+
+
+
+\end{frame}
+
+
+
+%------------------------------------------------
+%------------------------------------------------
+%------------------------------------------------
 
     \section{Conclusion}
 
     \begin{frame}
         \frametitle{Conclusion}
         \begin{itemize}
-            \item RL methods can be applicable to
-            a wide variety of problems
+            \item MARL problems are especially prone to the
+            curse of the dimensionality problem;
+            
+            \item We could reduce the action space 
+            by allowin agent-be-agent updates;
 
-            \item Out-of-the-box models work but
-            require fine-tuning and take
-            longer to converge
+            \item We could parallelize computations
+            by adding a signaling policy (precalculated offline);
+            
+            \item Multi-agent rollout can be extended with 
+            approximate policy iteration;
 
-            \item Simple methods like state discretization
-            are worth exploring when training speed and
-            solution complexity are of the essence
-
+            
         \end{itemize}
     \end{frame}
 
@@ -506,7 +696,7 @@ $$
                 \url{https://web.mit.edu/dimitrib/www/Multiagent_Sinica_2020.pdf}
 
                 \bibitem{whiteson20}\label{whiteson20}
-                Shimon Whiteson -- Factored Value Functions for Cooperative Multi-Agent Reinforcement Learning (2020) [Seminar].
+                Shimon Whiteson -- Multi-Agent Reinforcement Learning Reinforcement (July 2019) [Eastern European Machine Learning Summer School Seminar].
 
 
                 \bibitem{sadhu20}\label{sadhu20}
