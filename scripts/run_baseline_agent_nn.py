@@ -11,7 +11,9 @@ if __name__ == '__main__':
     env = gym.make(SpiderAndFlyEnv)
 
     # init env
-    obs_n = env.reset()
+    # TODO DEMO!!!
+    # obs_n = env.reset()
+    obs_n = env.reset_default()
 
     # init agents
     n_agents = env.n_agents

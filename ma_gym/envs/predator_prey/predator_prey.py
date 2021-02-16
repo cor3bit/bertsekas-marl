@@ -144,6 +144,40 @@ class PredatorPrey(gym.Env):
 
         return self.get_agent_obs()
 
+
+    def reset_default(self):
+        assert self.n_preys == 2
+        assert self.n_agents == 4
+        assert self._grid_shape == (10, 10)
+
+        self._total_episode_reward = [0 for _ in range(self.n_agents)]
+        self.agent_pos = {}
+        self.prey_pos = {}
+
+        # closer to the second prey
+        self.agent_pos[0] = [9, 5]
+        self.agent_pos[1] = [9, 6]
+        self.agent_pos[2] = [5, 9]
+        self.agent_pos[3] = [6, 9]
+
+        # at corners
+        self.prey_pos[0] = [0, 0]
+        self.prey_pos[1] = [9, 9]
+
+        self.__draw_base_img()
+
+
+
+
+
+        self._step_count = 0
+        self._agent_dones = [False for _ in range(self.n_agents)]
+        self._prey_alive = [True for _ in range(self.n_preys)]
+
+        return self.get_agent_obs()
+
+
+
     def __wall_exists(self, pos):
         row, col = pos
         return PRE_IDS['wall'] in self._base_grid[row, col]
