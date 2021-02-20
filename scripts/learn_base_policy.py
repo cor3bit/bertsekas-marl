@@ -14,12 +14,11 @@ from agents.qnetwork import QNetwork
 N_AGENTS = 4
 N_PREY = 2
 
+N_SAMPLES = 2_000_000
 
-N_SAMPLES = 1_000_000
+BATCH_SIZE = 256
 
-BATCH_SIZE = 128
-
-EPOCHS = 10
+EPOCHS = 20
 
 SEED = 42
 
@@ -58,12 +57,12 @@ def generate_samples(n_samples, seed):
             distances = env.get_distances()
 
             # transform into samples
-            obs_first = np.array(obs_n[0]).flatten()  # same for all agent
+            obs_first = np.array(obs_n[0], dtype=np.float32).flatten()  # same for all agent
             for i, a_dist in enumerate(distances):
-                agent_ohe = np.zeros(shape=(n_agents,), dtype=np.float)
+                agent_ohe = np.zeros(shape=(n_agents,), dtype=np.float32)
                 agent_ohe[i] = 1.
 
-                min_prey = a_dist.min(axis=1)
+                min_prey = a_dist.min(axis=1).astype(np.float32)
 
                 x = np.concatenate((obs_first, agent_ohe))
                 y = -min_prey
@@ -89,7 +88,13 @@ def generate_samples(n_samples, seed):
 def train_qnetwork(samples):
     print('Started Training.')
 
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    print(f'Found device: {device}.')
+
     net = QNetwork(N_AGENTS, N_PREY)
+
+    net.to(device)
 
     net.train()  # check
 
@@ -108,15 +113,15 @@ def train_qnetwork(samples):
 
         for i, data in enumerate(data_loader, 0):
             # get the inputs; data is a list of [inputs, labels]
-            inputs, labels = data
+            inputs, labels = data[0].to(device), data[1].to(device)
 
             # zero the parameter gradients
             optimizer.zero_grad()
 
             # forward + backward + optimize
-            outputs = net(inputs.float())
+            outputs = net(inputs)
 
-            loss = criterion(outputs.float(), labels.float())
+            loss = criterion(outputs, labels)
 
             loss.backward()
 
