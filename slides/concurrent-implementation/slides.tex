@@ -33,9 +33,9 @@
 %	TITLE PAGE
 %----------------------------------------------------------------------------------------
 
-\title[MARL]{Multiagent Reinforcement Learning:
-Rollout and Policy Iteration
-    (Bertsekas, 2020)}
+\title[MARL]{Concurrent Implementation 
+	of the 
+	Multiagent Rollout Algorithm}
 \author{Mikalai Korbit}
 
 \institute[IMT]
@@ -121,24 +121,6 @@ Rollout and Policy Iteration
     \end{frame}
 
 
-%------------------------------------------------
-
-    \begin{frame}
-        \frametitle{``Bertsekas Dictionary''}
-
-        Aligns optimal control definitions with the RL-world:
-        \begin{itemize}
-            \item Maximize value $\rightarrow$ minimize cost
-            \item Agent $\rightarrow$ Decision maker or controller
-            \item Action $\rightarrow$ Decision or control
-            \item Environment  $\rightarrow$ Dynamic system
-            \item Learning $\rightarrow$ Solving a DP-related problem using simulation
-            \item Self-learning (self-play) $\rightarrow$ Solving a DP problem using simulation-based policy iteration
-            \item Planning vs Learning distinction $\rightarrow$ Solving a DP problem with model-based vs model-free simulation
-        \end{itemize}
-
-    \end{frame}
-
 
 %------------------------------------------------
 
@@ -163,76 +145,52 @@ Rollout and Policy Iteration
     \end{frame}
 
 
-%------------------------------------------------
 
 
-    \begin{frame}
-        \frametitle{Taxonomy}
 
-        \begin{block}{Cooperative}
-            \begin{itemize}
-                \item The goal of cooperative agents is to achieve a common objective
-                \item Coordination problem
-            \end{itemize}
-        \end{block}
-
-        \begin{block}{Competitive}
-            \begin{itemize}
-                \item Zero-sum games (eg. chess, tic-tac-toe)
-                \item Minimax equilibria
-            \end{itemize}
-        \end{block}
-
-        \begin{block}{Mixed}
-            \begin{itemize}
-                \item  General-sum games (win-win, lose-lose scenarios;
-                eg. pollution model, ``what movie to watch?'')
-                \item  Nash equilibria
-            \end{itemize}
-        \end{block}
-
-	Slide adapted from \cite{whiteson19}
-
-    \end{frame}
-
-%------------------------------------------------
-
-
-    \begin{frame}
-        \frametitle{First Attempts to Solve MARL}
-
-        \begin{block}{Independent Q-Learning (Tan 93)}
-            \begin{itemize}
-                \item Each agent learns its own Q-function
-                \item Each agent treats the other agents as part of the environment
-                \item Independent Q-learning update rule for agent $a$:
-                $$
-                Q\left(s_{t}, u_{t}^{a}\right) \leftarrow Q\left(s_{t}, u_{t}^{a}\right)+\alpha\left[r_{t}+\gamma \max _{u} Q\left(s_{t+1}, u\right)-Q\left(s_{t}, u_{t}^{a}\right)\right]
-                $$
-
-            \end{itemize}
-
-        \end{block}
-
-        \begin{block}{Coordinated Q-Learning (Guestrin et al. 02)}
-            \begin{itemize}
-                \item Stationary learning of joint value function
-                $Q_{t o t}(s, \mathbf{u})$
-                \item Factorize to improve scalability
-
-            \end{itemize}
-        \end{block}
-
-	Slide adapted from \cite{whiteson19}
-
-    \end{frame}
 
 
 %------------------------------------------------
-
-
-    \section{Multiagent Rollout}
+    \section{Concurrency in Python}
 %------------------------------------------------
+
+\begin{frame}
+
+	\frametitle{Concurrency in One Slide}
+	
+	\begin{figure}
+		\includegraphics[scale=0.35]{2a_mindmap}
+		\caption{Concurrency Mindmap by Luciano Ramalho (2019)}
+	\end{figure}
+	
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+	
+	\frametitle{Concurrency Tools in Python}
+    
+    \begin{itemize}
+		\item TODO
+		\item TODO
+		\item TODO
+	\end{itemize}
+
+\end{frame}
+
+
+
+
+
+
+
+
+
+%------------------------------------------------
+\section{Parallel Implementaion}
+%------------------------------------------------
+
 
 
     \begin{frame}
@@ -471,12 +429,6 @@ Rollout and Policy Iteration
     \end{frame}
 
 
-%------------------------------------------------
-
-
-    \section{Extensions}
-%------------------------------------------------
-
 
 
     \begin{frame}
@@ -543,40 +495,6 @@ Rollout and Policy Iteration
         \end{itemize}
     \end{frame}
 
-%------------------------------------------------
-
-%    \begin{frame}
-%        \frametitle{Autonomous Multiagent Rollout Mechanics}
-%
-%        $$
-%        \begin{array}{c}
-%            \tilde{\mu}_{k}^{1}\left(x_{k}\right) \in \arg \min _{u_{k}^{1} \in U_{k}^{1}\left(x_{k}\right)} E\left\{g_{k}\left(x_{k}, u_{k}^{1}, \mu_{k}^{2}\left(x_{k}\right),\right.\right.
-%            \\
-%            \left.\ldots, \mu_{k}^{m}\left(x_{k}\right), w_{k}\right) \\
-%            +J_{k+1, \pi}\left(f_{k}\left(x_{k}, u_{k}^{1}, \mu_{k}^{2}\left(x_{k}\right)\right.\right.
-%            \\
-%            \left.\left.\left.\ldots, \mu_{k}^{m}\left(x_{k}\right), w_{k}\right)\right)\right\}
-%            \\
-%            \tilde{\mu}_{k}^{2}\left(x_{k}\right) \in \arg \min _{u_{k}^{2} \in U_{k}^{2}\left(x_{k}\right)} E\left\{g_{k}\left(x_{k}, \widehat{\mu}_{k}^{1}\left(x_{k}\right), u_{k}^{2}\right.\right.
-%            \\
-%            \left.\ldots, \mu_{k}^{m}\left(x_{k}\right), w_{k}\right) \\
-%            +J_{k+1, \pi}\left(f_{k}\left(x_{k}, \widehat{\mu}_{k}^{1}\left(x_{k}\right), u_{k}^{2}\right.\right.
-%            \\
-%            \left.\left.\left.\ldots, \mu_{k}^{m}\left(x_{k}\right), w_{k}\right)\right)\right\}
-%            \\
-%            \ldots & \ldots \\
-%            \qquad \begin{array}{c}
-%                       \mu_{k}^{m}\left(x_{k}\right) \in \arg \min _{u_{k}^{m} \in U_{k}^{m}\left(x_{k}\right)} E\left\{g_{k}\left(x_{k}, \widehat{\mu}_{k}^{1}\left(x_{k}\right)\right.\right.
-%                       \\
-%                       \left.\ldots, \widehat{\mu}_{k}^{m-1}\left(x_{k}\right), u_{k}^{m}, w_{k}\right)
-%            \end{array} \\
-%            +J_{k+1, \pi}\left(f_{k}\left(x_{k}, \widehat{\mu}_{k}^{1}\left(x_{k}\right)\right.\right.
-%            \\
-%            \left.\left.\left.\ldots, \widehat{\mu}_{k}^{m-1}\left(x_{k}\right), u_{k}^{m}, w_{k}\right)\right)\right\}
-%        \end{array}
-%        $$
-%
-%    \end{frame}
 
 %------------------------------------------------
 
@@ -598,6 +516,12 @@ Rollout and Policy Iteration
 
 
     \end{frame}
+
+
+
+
+
+
 
 
 %------------------------------------------------
