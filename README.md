@@ -1,7 +1,8 @@
 ## Multiagent Reinforcement Learning: Rollout and Policy Iteration
 
 
-Implementation of the Multiagent Rollout method based on the 
+Parallel Implementation of the Multiagent Rollout
+based on the 
 paper by Dimitri Bertsekas (2020).
 
 
@@ -10,6 +11,12 @@ paper by Dimitri Bertsekas (2020).
 Simulation environment follows the rules of the Spiders-and-Flies game as 
 specified in [1]. The environment is adapted from Anurag Koul's ma-gym [2] 
 modifying the PredatorPrey env.
+
+
+
+### Results
+
+TODO
 
 
 
