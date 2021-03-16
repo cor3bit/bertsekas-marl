@@ -39,9 +39,11 @@ class BaselineAgentNn:
         return net
 
     def _convert_to_x(self, obs):
-        obs_first = np.array(obs).flatten()
+        # state
+        obs_first = np.array(obs, np.float32).flatten()
 
-        agent_ohe = np.zeros(shape=(self._n_agents,), dtype=np.float)
+        # agent ohe
+        agent_ohe = np.zeros(shape=(self._n_agents,), dtype=np.float32)
         agent_ohe[self.id] = 1.
 
         x = np.concatenate((obs_first, agent_ohe))
