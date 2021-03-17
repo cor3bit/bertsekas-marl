@@ -35,7 +35,7 @@ class RolloutAgent:
         raise NotImplementedError('Not implemented for Rollout Agent!')
 
     def _load_net(self, qnet_name=None):
-        net = QNetworkRollout(self._n_agents, self._n_preys)
+        net = QNetworkRollout(self._n_agents, self._n_preys, self._action_space.n)
         net.load_state_dict(torch.load(RolloutModelPath_10x10_4v2 if qnet_name is None else qnet_name))
 
         # set dropout and batch normalization layers to evaluation mode

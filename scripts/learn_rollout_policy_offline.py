@@ -16,9 +16,12 @@ from agents.qnetwork_rollout import QNetworkRollout
 N_AGENTS = 4
 N_PREY = 2
 
-N_SAMPLES = 400_000
-EPOCHS = 200
-BATCH_SIZE = 128
+N_SAMPLES = 5_000
+EPOCHS = 100
+BATCH_SIZE = 512
+
+N_SIMS_PER_ACTION = 10
+EPSILON = .05
 
 SEED = 42
 
@@ -70,7 +73,8 @@ def generate_samples(n_samples, seed):
     # create Spider-and-Fly game
     env = gym.make(SpiderAndFlyEnv)
     env.seed(seed)
-    action_space_n = env.action_space[0].n
+    action_space = env.action_space[0]
+    action_space_n = action_space.n
 
     with tqdm(total=n_samples) as pbar:
         while len(samples) < n_samples:
@@ -89,35 +93,48 @@ def generate_samples(n_samples, seed):
 
             while not all(done_n):
 
-                # TODO shuffle agents before each move
+                # TODO (not urgent) shuffle agents before each move
 
-                prev_actions = np.zeros(shape=(n_agents,), dtype=np.float32)
-
-                # 0 - means Not Set
-                scaled_prev_actions = np.zeros(shape=(n_agents,), dtype=np.float32)
+                prev_actions = []
 
                 for agent, obs in zip(agents, obs_n):
                     agent_id = agent.id
 
-                    # TODO simulate 5 actions, select the best one, assume Baseline policy
-
                     agent_ohe = np.zeros(shape=(n_agents,), dtype=np.float32)
-
                     agent_ohe[agent_id] = 1.0
 
                     actions_total_returns = np.zeros(shape=(action_space_n,), dtype=np.float32)
 
                     for action_id in range(action_space_n):
                         # copy env
-                        total_return = run_simulation(env, agents, prev_actions, obs, agent_id, action_id)
+                        total_return = .0
+                        for _ in range(N_SIMS_PER_ACTION):
+                            total_return += run_simulation(env, agents, prev_actions, obs, agent_id,
+                                                           action_id) / N_SIMS_PER_ACTION
+
                         actions_total_returns[action_id] = total_return
 
                         # run simulation until the end
 
                     # TODO select the best action
-                    best_action = np.argmax(actions_total_returns)
+                    p = np.random.random()
+                    if p < EPSILON:
+                        # random action -> exploration
+                        best_action = action_space.sample()
+                    else:
+                        best_action = np.argmax(actions_total_returns)
 
-                    x = np.concatenate((np.array(obs, dtype=np.float32), agent_ohe, scaled_prev_actions))
+                    prev_actions.append(best_action)
+
+                    # previous actions
+                    prev_actions_ohe = np.zeros(shape=(N_AGENTS * action_space_n,), dtype=np.float32)
+                    if prev_actions:
+                        for agent_id, prev_action in enumerate(prev_actions):
+                            # TODO check!!!
+                            pos = int(agent_id * action_space_n + prev_action)
+                            prev_actions_ohe[pos] = 1.
+
+                    x = np.concatenate((np.array(obs, dtype=np.float32), agent_ohe, prev_actions_ohe))
 
                     samples.append((x, actions_total_returns))
                     pbar.update(1)
@@ -127,8 +144,8 @@ def generate_samples(n_samples, seed):
                     # act_n.append(best_action)
 
                     # add to prev_actions only after
-                    prev_actions[agent_id] = best_action
-                    scaled_prev_actions[agent_id] = (best_action + 1) / (action_space_n + 1)
+                    # prev_actions[agent_id] = best_action
+                    # scaled_prev_actions[agent_id] = (best_action + 1) / (action_space_n + 1)
 
                     sub_obs_n, sub_reward_n, sub_done_n, sub_info = env.substep(agent_id, best_action)
 
@@ -140,7 +157,6 @@ def generate_samples(n_samples, seed):
                 done_n = sub_done_n
                 info = sub_info
 
-
             env.close()
 
     print('Finished sample generation.')
@@ -151,7 +167,7 @@ def generate_samples(n_samples, seed):
 def train_qnetwork(samples):
     print('Started Training.')
 
-    net = QNetworkRollout(N_AGENTS, N_PREY)
+    net = QNetworkRollout(N_AGENTS, N_PREY, 5)
 
     net.train()  # check
 

@@ -30,13 +30,9 @@ if __name__ == '__main__':
         # all agents act based on the observation
         act_n = []
 
-        scaled_prev_actions = np.zeros(shape=(n_agents,), dtype=np.float32)
-
         for agent, obs in zip(agents, obs_n):
-            best_action = agent.act(obs, scaled_prev_actions)
+            best_action = agent.act(obs, act_n)
             act_n.append(best_action)
-
-            scaled_prev_actions[agent.id] = (best_action + 1) / (action_space_n + 1)
 
         # update step ->
         obs_n, reward_n, done_n, info = env.step(act_n)
