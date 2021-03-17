@@ -15,12 +15,30 @@ modifying the PredatorPrey env.
 
 ### Usage
 
-TODO
+- Install the requirements with `pip`:
+
+```
+$ pip install -r requirements.txt
+```
+
+- Run the Baseline Agent from the `scripts` folder:
+
+```
+$ python run_baseline_agent_nn.py
+```
+
+- Run the Baseline Agent from the `scripts` folder:
+
+```
+$ python run_rollout_agent.py
+```
 
 
 ### Results
 
-TODO
+Baseline         |  Rollout     |
+:-------------------------:|:-------------------------:|
+![](artifacts/baseline.gif)  |  ![](artifacts/dl_poisson.png) |
 
 
 
