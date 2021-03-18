@@ -82,7 +82,7 @@ def generate_samples(n_samples, seed):
 
     print('Finished sample generation.')
 
-    return samples[:N_SAMPLES]
+    return samples[:n_samples]
 
 
 def train_qnetwork(samples):

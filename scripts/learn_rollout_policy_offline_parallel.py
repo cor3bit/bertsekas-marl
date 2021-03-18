@@ -1,5 +1,7 @@
 from time import perf_counter
 from copy import copy
+import multiprocessing as mp
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from tqdm import tqdm
 import numpy as np
@@ -103,8 +105,19 @@ def generate_samples(n_samples, seed):
 
                     for action_id in range(action_space_n):
                         total_return = .0
+
+                        # TODO parallel
                         for _ in range(N_SIMS_PER_ACTION):
                             total_return += run_simulation(env, agents, agent_id, action_id) / N_SIMS_PER_ACTION
+
+                        # with ProcessPoolExecutor(max_workers=10) as pool:
+                        #     futures = []
+                        #     for _ in range(N_SIMS_PER_ACTION):
+                        #         futures.append(pool.submit(run_simulation, env, agents, agent_id, action_id))
+                        #
+                        #     for f in as_completed(futures):
+                        #         sim_return = f.result() / N_SIMS_PER_ACTION
+                        #         total_return += sim_return
 
                         actions_total_returns[action_id] = total_return
 
@@ -196,7 +209,22 @@ if __name__ == '__main__':
 
     # do simulations -> obtain samples
     t1 = perf_counter()
-    train_samples = generate_samples(N_SAMPLES, SEED)
+
+    # train_samples = generate_samples(N_SAMPLES, SEED)
+
+    # divide in chunks
+    n_workers = mp.cpu_count() - 1
+    chunk = int(N_SAMPLES / n_workers)
+    train_samples = []
+
+    with ProcessPoolExecutor(max_workers=n_workers) as pool:
+        futures = []
+        for _ in range(N_SIMS_PER_ACTION):
+            futures.append(pool.submit(generate_samples, chunk, SEED))
+
+        for f in as_completed(futures):
+            samples_part = f.result()
+            train_samples += samples_part
 
     # train rollout network
     t2 = perf_counter()
