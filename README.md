@@ -27,7 +27,7 @@ $ pip install -r requirements.txt
 $ python run_baseline_agent_nn.py
 ```
 
-- Run the Baseline Agent from the `scripts` folder:
+- Run the Agent-by-Agent Rollout from the `scripts` folder:
 
 ```
 $ python run_rollout_agent.py
@@ -36,9 +36,9 @@ $ python run_rollout_agent.py
 
 ### Results
 
-Baseline         |  Rollout     |
-:-------------------------:|:-------------------------:|
-![](artifacts/baseline.gif)  |  ![](artifacts/dl_poisson.png) |
+Baseline Policy        |  Agent-by-Agent Rollout     | Autonomous Rollout     |
+:-------------------------:|:-------------------------:|:-------------------------:|
+![](artifacts/baseline.gif)  |  ![](artifacts/dl_poisson.png) |![](artifacts/dl_poisson.png) |
 
 
 

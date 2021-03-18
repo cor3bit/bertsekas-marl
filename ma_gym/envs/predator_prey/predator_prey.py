@@ -144,7 +144,6 @@ class PredatorPrey(gym.Env):
 
         return self.get_agent_obs()
 
-
     def reset_default(self):
         assert self.n_preys == 2
         assert self.n_agents == 4
@@ -166,17 +165,11 @@ class PredatorPrey(gym.Env):
 
         self.__draw_base_img()
 
-
-
-
-
         self._step_count = 0
         self._agent_dones = [False for _ in range(self.n_agents)]
         self._prey_alive = [True for _ in range(self.n_preys)]
 
         return self.get_agent_obs()
-
-
 
     def __wall_exists(self, pos):
         row, col = pos
@@ -310,7 +303,7 @@ class PredatorPrey(gym.Env):
 
         # Partial Step -> update only one agent's position
         if not is_full_step:
-            return self.get_agent_obs(), None, None, None
+            return self.get_agent_obs(), None, None, {'prey_alive': self._prey_alive}
         # Full Step -> update prey, recalculate rewards
         else:
             self._step_count += 1
