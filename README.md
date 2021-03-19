@@ -33,6 +33,11 @@ $ python run_baseline_agent_nn.py
 $ python run_rollout_agent.py
 ```
 
+- Run the Autonomous Rollout from the `scripts` folder:
+
+```
+$ python run_autonomous_rollout_agent.py
+```
 
 ### Results
 

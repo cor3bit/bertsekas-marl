@@ -213,13 +213,14 @@ if __name__ == '__main__':
     # train_samples = generate_samples(N_SAMPLES, SEED)
 
     # divide in chunks
-    n_workers = mp.cpu_count() - 1
+    # n_workers = mp.cpu_count() - 1
+    n_workers = 5
     chunk = int(N_SAMPLES / n_workers)
     train_samples = []
 
     with ProcessPoolExecutor(max_workers=n_workers) as pool:
         futures = []
-        for _ in range(N_SIMS_PER_ACTION):
+        for _ in range(n_workers):
             futures.append(pool.submit(generate_samples, chunk, SEED))
 
         for f in as_completed(futures):
