@@ -28,7 +28,7 @@ class RuleBasedAgent:
     def act(
             self,
             obs: np.array
-    ):
+    ) -> int:
         n_actions = self._action_space.n
 
         curr_pos = self._get_agent_pos(obs)
@@ -51,7 +51,7 @@ class RuleBasedAgent:
     def _convert_to_pos(
             self,
             pos_scaled: Tuple[np.float32, np.float32],
-    ):
+    ) -> Tuple[int, int]:
         grid_row, grid_col = self._fake_env._grid_shape
         row_pos_scaled, col_pos_scaled = pos_scaled
         row_pos = int(np.round((grid_row - 1) * row_pos_scaled, 0))
@@ -61,7 +61,7 @@ class RuleBasedAgent:
     def _get_agent_pos(
             self,
             obs: np.array,
-    ):
+    ) -> Tuple[int, int]:
         start_ind = int(self.id * 2)
         row_pos_scaled, col_pos_scaled = obs[start_ind], obs[start_ind + 1]
         row_pos, col_pos = self._convert_to_pos((row_pos_scaled, col_pos_scaled))
@@ -70,7 +70,7 @@ class RuleBasedAgent:
     def _get_alive_prey_coords(
             self,
             obs: np.array,
-    ):
+    ) -> List[Tuple[float, float]]:
         alive_prey_coords = []
 
         preys_alive = obs[-self._p:]

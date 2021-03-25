@@ -1,5 +1,6 @@
 import copy
 import logging
+from typing import List, Tuple
 
 import gym
 import numpy as np
@@ -170,6 +171,49 @@ class PredatorPrey(gym.Env):
         self._prey_alive = [True for _ in range(self.n_preys)]
 
         return self.get_agent_obs()
+
+    def reset_from(self, obs):
+        assert self.n_preys == 2
+        assert self.n_agents == 4
+        assert self._grid_shape == (10, 10)
+
+        self._total_episode_reward = [0 for _ in range(self.n_agents)]
+        self.agent_pos = {}
+        self.prey_pos = {}
+
+        # agent positions
+        for i in range(self.n_agents):
+            start_ind = int(i * 2)
+            row_pos_scaled, col_pos_scaled = obs[start_ind], obs[start_ind + 1]
+            row_pos, col_pos = self._convert_to_pos((row_pos_scaled, col_pos_scaled))
+            self.agent_pos[i] = [row_pos, col_pos]
+
+        # prey positions
+        for j in range(self.n_preys):
+            start_ind = int(self.n_agents * 2 + j * 2)
+            row_pos_scaled, col_pos_scaled = obs[start_ind], obs[start_ind + 1]
+            row_pos, col_pos = self._convert_to_pos((row_pos_scaled, col_pos_scaled))
+            self.prey_pos[j] = [row_pos, col_pos]
+
+        self.__draw_base_img()
+
+        self._step_count = 0
+        self._agent_dones = [False for _ in range(self.n_agents)]
+
+        preys_alive = obs[-self.n_preys:]
+        self._prey_alive = [bool(prey_alive) for prey_alive in preys_alive]
+
+        return self.get_agent_obs()
+
+    def _convert_to_pos(
+            self,
+            pos_scaled: Tuple[float, float],
+    ) -> Tuple[int, int]:
+        grid_row, grid_col = self._grid_shape
+        row_pos_scaled, col_pos_scaled = pos_scaled
+        row_pos = int(np.round((grid_row - 1) * row_pos_scaled, 0))
+        col_pos = int(np.round((grid_col - 1) * col_pos_scaled, 0))
+        return row_pos, col_pos
 
     def __wall_exists(self, pos):
         row, col = pos

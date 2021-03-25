@@ -28,7 +28,7 @@ if __name__ == '__main__':
         # init stopping condition
         done_n = [False] * m_agents
 
-        # run 100 episodes for a random agent
+        # run an episode until all prey is caught
         while not all(done_n):
 
             # all agents act based on the observation
