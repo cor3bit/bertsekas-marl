@@ -36,7 +36,6 @@ class ExactRolloutAgent:
         # TODO parallelize for each action, process pool + futures
 
         for action_id in range(n_actions):
-
             # 1st step - optimal actions from previous agents,
             # simulated step from current agent,
             # greedy (baseline) from undecided agents
@@ -79,7 +78,7 @@ class ExactRolloutAgent:
 
             # 1 step
             obs_n, reward_n, done_n, info = env.step(act_n)
-            avg_total_reward += reward_n[self.id]
+            avg_total_reward += np.sum(reward_n)
 
             # run an episode until all prey is caught
             while not all(done_n):
@@ -92,10 +91,11 @@ class ExactRolloutAgent:
                 # update step
                 obs_n, reward_n, done_n, info = env.step(act_n)
 
-                avg_total_reward += reward_n[self.id]
+                avg_total_reward += np.sum(reward_n)
 
         env.close()
 
+        avg_total_reward /= self._m_agents
         avg_total_reward /= self._n_sim_per_step
 
         return avg_total_reward

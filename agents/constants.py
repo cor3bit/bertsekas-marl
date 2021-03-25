@@ -4,7 +4,7 @@ RolloutModelPath_10x10_4v2 = '../artifacts/rollout_policy_10x10_4v2.pt'
 
 
 class AgentType:
-    RANDOM = 'Random Agent'
-    RULE_BASED = 'Rule Based'  # Smallest Manhattan Distance
-    EXACT_ROLLOUT = 'ExactRollout'
+    RANDOM = 'Random'
+    RULE_BASED = 'Rule-Based'  # Smallest Manhattan Distance
+    EXACT_ROLLOUT = 'Exact DP Rollout'
 
