@@ -4,7 +4,7 @@ import gym
 import ma_gym  # register new envs on import
 
 from src.constants import SpiderAndFlyEnv
-from src.rule_based_agent import RuleBasedAgent
+from src.agent_rule_based import RuleBasedAgent
 
 N_EPISODES = 5
 

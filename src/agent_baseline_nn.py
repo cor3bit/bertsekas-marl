@@ -3,9 +3,10 @@ import torch
 
 from src.qnetwork import QNetwork
 from src.constants import BaselineModelPath_10x10_4v2
+from src.agent import Agent
 
 
-class BaselineAgentNn:
+class BaselineAgentNn(Agent):
     def __init__(self, agent_id, n_agents, n_preys, action_space, qnet_name=None):
         self.id = agent_id
         self._n_agents = n_agents
@@ -15,7 +16,7 @@ class BaselineAgentNn:
         # load neural net on init
         self._nn = self._load_net(qnet_name)
 
-    def act(self, obs):
+    def act(self, obs, **kwargs):
         # 1 form 5 samples for each action
         # 2 call q-network
         # 3 arg max action

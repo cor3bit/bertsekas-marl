@@ -5,10 +5,11 @@ import gym
 import ma_gym
 
 from src.constants import SpiderAndFlyEnv
-from src.rule_based_agent import RuleBasedAgent
+from src.agent_rule_based import RuleBasedAgent
+from src.agent import Agent
 
 
-class ExactRolloutAgent:
+class ExactRolloutAgent(Agent):
     def __init__(
             self,
             agent_id: int,
@@ -28,8 +29,10 @@ class ExactRolloutAgent:
     def act(
             self,
             obs: Iterable[float],
-            prev_actions: Dict[int, int],
+            prev_actions: Dict[int, int] = None,
     ) -> int:
+        assert prev_actions is not None
+
         n_actions = self._action_space.n
         q_values = np.full((n_actions,), fill_value=-np.inf, dtype=np.float32)
 

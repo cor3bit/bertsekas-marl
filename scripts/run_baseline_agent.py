@@ -33,7 +33,7 @@ if __name__ == '__main__':
         # all agents act based on the observation
         act_n = []
         for agent, obs, action_distances in zip(agents, obs_n, distances):
-            act_n.append(agent.act(action_distances))
+            act_n.append(agent.act(action_distances, ))
 
         # update step ->
         obs_n, reward_n, done_n, info = env.step(act_n)

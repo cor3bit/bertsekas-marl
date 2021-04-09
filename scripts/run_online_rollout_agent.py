@@ -7,7 +7,7 @@ import gym
 import ma_gym  # register new envs on import
 
 from src.constants import SpiderAndFlyEnv
-from src.baseline_agent_nn import BaselineAgentNn
+from src.agent_baseline_nn import BaselineAgentNn
 
 EPISODES_PER_SIM = 10
 
@@ -38,7 +38,7 @@ def run_simulation(
                 act_n.append(action_id)
             # baseline policy actions
             else:
-                best_action = agent.act(obs)
+                best_action = agent.act(obs, )
                 act_n.append(best_action)
 
         # finish sub-interval
@@ -50,7 +50,7 @@ def run_simulation(
             act_n = []
 
             for agent, obs in zip(agents, obs_n):
-                best_action = agent.act(obs)
+                best_action = agent.act(obs, )
                 act_n.append(best_action)
 
             obs_n, reward_n, done_n, info = env_copy.step(act_n)

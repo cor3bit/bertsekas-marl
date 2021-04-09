@@ -5,7 +5,7 @@ import ma_gym  # register new envs on import
 from ma_gym.wrappers import Monitor
 
 from src.constants import SpiderAndFlyEnv
-from src.baseline_agent_nn import BaselineAgentNn
+from src.agent_baseline_nn import BaselineAgentNn
 
 N_EPISODES = 5
 
@@ -38,7 +38,7 @@ if __name__ == '__main__':
             # all agents act based on the observation
             act_n = []
             for agent, obs in zip(agents, obs_n):
-                best_action = agent.act(obs)
+                best_action = agent.act(obs, )
                 act_n.append(best_action)
 
             # update step ->

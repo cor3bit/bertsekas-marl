@@ -72,7 +72,7 @@ def generate_samples(n_samples, seed):
             # all agents act based on the observation
             act_n = []
             for agent, obs, action_distances in zip(agents, obs_n, distances):
-                max_action = agent.act(action_distances)
+                max_action = agent.act(action_distances, )
                 act_n.append(max_action)
 
             # update step ->

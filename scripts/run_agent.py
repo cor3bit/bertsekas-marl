@@ -5,9 +5,9 @@ import gym
 import ma_gym  # register new envs on import
 
 from src.constants import SpiderAndFlyEnv, AgentType
-from src.random_agent import RandomAgent
-from src.rule_based_agent import RuleBasedAgent
-from src.exact_rollout_agent import ExactRolloutAgent
+from src.agent_random import RandomAgent
+from src.agent_rule_based import RuleBasedAgent
+from src.agent_exact_rollout import ExactRolloutAgent
 
 N_EPISODES = 3
 AGENT_TYPE = AgentType.EXACT_ROLLOUT
@@ -57,7 +57,7 @@ if __name__ == '__main__':
                 if isinstance(agent, ExactRolloutAgent):
                     action_id = agent.act(obs, prev_actions)
                 else:
-                    action_id = agent.act(obs)
+                    action_id = agent.act(obs, )
 
                 prev_actions[i] = action_id
                 act_n.append(action_id)

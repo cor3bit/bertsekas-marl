@@ -7,4 +7,3 @@ class AgentType:
     RANDOM = 'Random'
     RULE_BASED = 'Rule-Based'  # Smallest Manhattan Distance
     EXACT_ROLLOUT = 'Exact DP Rollout'
-

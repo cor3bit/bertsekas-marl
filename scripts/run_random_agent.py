@@ -4,7 +4,7 @@ import gym
 import ma_gym  # register new envs on import
 
 from src.constants import SpiderAndFlyEnv
-from src.random_agent import RandomAgent
+from src.agent_random import RandomAgent
 
 if __name__ == '__main__':
     # create Spider-and-Fly game

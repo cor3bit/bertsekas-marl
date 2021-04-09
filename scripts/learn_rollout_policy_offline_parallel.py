@@ -12,8 +12,8 @@ import torch.optim as optim
 import ma_gym  # register new envs on import
 
 from src.constants import SpiderAndFlyEnv, RolloutModelPath_10x10_4v2, BaselineModelPath_10x10_4v2
-from src.baseline_agent_nn import BaselineAgentNn
-from src.rollout_agent import RolloutAgent
+from src.agent_baseline_nn import BaselineAgentNn
+from src.agent_rollout import RolloutAgent
 from src.qnetwork_rollout import QNetworkRollout
 
 N_AGENTS = 4
@@ -40,7 +40,7 @@ def run_simulation(env, agents, agent_id, action_id):
     for i, agent in enumerate(agents):
         # start with the next agent
         if i > agent_id:
-            best_action = agent.act(obs_n[i])
+            best_action = agent.act(obs_n[i], )
             obs_n, reward_n, done_n, info = env_copy.substep(i, best_action)
 
     assert reward_n is not None
@@ -51,7 +51,7 @@ def run_simulation(env, agents, agent_id, action_id):
         act_n = []
 
         for agent, obs in zip(agents, obs_n):
-            best_action = agent.act(obs)
+            best_action = agent.act(obs, )
             act_n.append(best_action)
 
         obs_n, reward_n, done_n, info = env_copy.step(act_n)

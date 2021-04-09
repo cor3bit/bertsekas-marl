@@ -5,9 +5,10 @@ import gym
 import ma_gym
 
 from src.constants import SpiderAndFlyEnv
+from src.agent import Agent
 
 
-class RuleBasedAgent:
+class RuleBasedAgent(Agent):
     def __init__(
             self,
             agent_id: int,
@@ -25,10 +26,7 @@ class RuleBasedAgent:
         self._fake_env = gym.make(SpiderAndFlyEnv)
         assert self._fake_env._grid_shape == grid_shape
 
-    def act(
-            self,
-            obs: np.array
-    ) -> int:
+    def act(self, obs, **kwargs):
         n_actions = self._action_space.n
 
         curr_pos = self._get_agent_pos(obs)

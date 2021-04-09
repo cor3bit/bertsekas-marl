@@ -3,9 +3,10 @@ import torch
 
 from src.qnetwork_rollout import QNetworkRollout
 from src.constants import RolloutModelPath_10x10_4v2
+from src.agent import Agent
 
 
-class RolloutAgent:
+class RolloutAgent(Agent):
     def __init__(self, agent_id, n_agents, n_preys, action_space, qnet_name=None):
         self.id = agent_id
         self._n_agents = n_agents
