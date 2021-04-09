@@ -4,8 +4,8 @@ import numpy as np
 import gym
 import ma_gym
 
-from agents.constants import SpiderAndFlyEnv
-from agents.rule_based_agent import RuleBasedAgent
+from src.constants import SpiderAndFlyEnv
+from src.rule_based_agent import RuleBasedAgent
 
 
 class ExactRolloutAgent:

@@ -4,7 +4,7 @@ import numpy as np
 import gym
 import ma_gym
 
-from agents.constants import SpiderAndFlyEnv
+from src.constants import SpiderAndFlyEnv
 
 
 class RuleBasedAgent:

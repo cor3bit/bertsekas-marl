@@ -4,10 +4,10 @@ from typing import List
 import gym
 import ma_gym  # register new envs on import
 
-from agents.constants import SpiderAndFlyEnv, AgentType
-from agents.random_agent import RandomAgent
-from agents.rule_based_agent import RuleBasedAgent
-from agents.exact_rollout_agent import ExactRolloutAgent
+from src.constants import SpiderAndFlyEnv, AgentType
+from src.random_agent import RandomAgent
+from src.rule_based_agent import RuleBasedAgent
+from src.exact_rollout_agent import ExactRolloutAgent
 
 N_EPISODES = 3
 AGENT_TYPE = AgentType.EXACT_ROLLOUT

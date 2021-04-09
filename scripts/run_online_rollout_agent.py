@@ -6,8 +6,8 @@ import numpy as np
 import gym
 import ma_gym  # register new envs on import
 
-from agents.constants import SpiderAndFlyEnv
-from agents.baseline_agent_nn import BaselineAgentNn
+from src.constants import SpiderAndFlyEnv
+from src.baseline_agent_nn import BaselineAgentNn
 
 EPISODES_PER_SIM = 10
 

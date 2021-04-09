@@ -3,8 +3,8 @@ import time
 import gym
 import ma_gym  # register new envs on import
 
-from agents.constants import SpiderAndFlyEnv
-from agents.random_agent import RandomAgent
+from src.constants import SpiderAndFlyEnv
+from src.random_agent import RandomAgent
 
 if __name__ == '__main__':
     # create Spider-and-Fly game

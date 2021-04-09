@@ -11,10 +11,10 @@ import torch.nn as nn
 import torch.optim as optim
 import ma_gym  # register new envs on import
 
-from agents.constants import SpiderAndFlyEnv, RolloutModelPath_10x10_4v2, BaselineModelPath_10x10_4v2
-from agents.baseline_agent_nn import BaselineAgentNn
-from agents.rollout_agent import RolloutAgent
-from agents.qnetwork_rollout import QNetworkRollout
+from src.constants import SpiderAndFlyEnv, RolloutModelPath_10x10_4v2, BaselineModelPath_10x10_4v2
+from src.baseline_agent_nn import BaselineAgentNn
+from src.rollout_agent import RolloutAgent
+from src.qnetwork_rollout import QNetworkRollout
 
 N_AGENTS = 4
 N_PREY = 2

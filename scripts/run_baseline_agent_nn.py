@@ -4,8 +4,8 @@ import gym
 import ma_gym  # register new envs on import
 from ma_gym.wrappers import Monitor
 
-from agents.constants import SpiderAndFlyEnv
-from agents.baseline_agent_nn import BaselineAgentNn
+from src.constants import SpiderAndFlyEnv
+from src.baseline_agent_nn import BaselineAgentNn
 
 N_EPISODES = 5
 

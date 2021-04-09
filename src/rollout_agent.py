@@ -1,8 +1,8 @@
 import numpy as np
 import torch
 
-from agents.qnetwork_rollout import QNetworkRollout
-from agents.constants import RolloutModelPath_10x10_4v2
+from src.qnetwork_rollout import QNetworkRollout
+from src.constants import RolloutModelPath_10x10_4v2
 
 
 class RolloutAgent:

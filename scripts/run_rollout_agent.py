@@ -5,8 +5,8 @@ import gym
 import ma_gym  # register new envs on import
 from ma_gym.wrappers import Monitor
 
-from agents.constants import SpiderAndFlyEnv
-from agents.rollout_agent import RolloutAgent
+from src.constants import SpiderAndFlyEnv
+from src.rollout_agent import RolloutAgent
 
 N_EPISODES = 5
 

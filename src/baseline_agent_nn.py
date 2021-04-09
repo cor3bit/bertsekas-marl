@@ -1,8 +1,8 @@
 import numpy as np
 import torch
 
-from agents.qnetwork import QNetwork
-from agents.constants import BaselineModelPath_10x10_4v2
+from src.qnetwork import QNetwork
+from src.constants import BaselineModelPath_10x10_4v2
 
 
 class BaselineAgentNn:

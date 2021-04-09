@@ -7,9 +7,9 @@ import torch.nn as nn
 import torch.optim as optim
 import ma_gym  # register new envs on import
 
-from agents.constants import SpiderAndFlyEnv, BaselineModelPath_10x10_4v2
-from agents.baseline_agent import BaselineAgent
-from agents.qnetwork import QNetwork
+from src.constants import SpiderAndFlyEnv, BaselineModelPath_10x10_4v2
+from src.baseline_agent import BaselineAgent
+from src.qnetwork import QNetwork
 
 N_AGENTS = 4
 N_PREY = 2

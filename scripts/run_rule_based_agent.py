@@ -3,8 +3,8 @@ import time
 import gym
 import ma_gym  # register new envs on import
 
-from agents.constants import SpiderAndFlyEnv
-from agents.rule_based_agent import RuleBasedAgent
+from src.constants import SpiderAndFlyEnv
+from src.rule_based_agent import RuleBasedAgent
 
 N_EPISODES = 5
 
