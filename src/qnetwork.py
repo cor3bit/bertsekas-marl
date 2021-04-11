@@ -2,18 +2,23 @@ import torch.nn as nn
 
 
 class QNetwork(nn.Module):
-    def __init__(self, n_agents, m_preys):
+    def __init__(self, m_agents, p_preys, action_size):
         super(QNetwork, self).__init__()
 
-        # coords of agents & preys + alive status + OHE vector of agents
-        input_dims = (n_agents + m_preys) * 2 + m_preys + n_agents
+        # coords of agents & preys + alive status + OHE vector of agents (active agent)
+        state_dims = (m_agents + p_preys) * 2 + p_preys
+        input_dims = state_dims + m_agents  # + action_size * m_agents
 
         self.net = nn.Sequential(
-            nn.Linear(input_dims, 64),
-            nn.BatchNorm1d(64),
+            nn.Linear(input_dims, 128),
+            nn.BatchNorm1d(128),
             nn.ReLU(),
 
-            nn.Linear(64, 128),
+            nn.Linear(128, 256),
+            nn.BatchNorm1d(256),
+            nn.ReLU(),
+
+            nn.Linear(256, 128),
             nn.BatchNorm1d(128),
             nn.ReLU(),
 
@@ -21,7 +26,7 @@ class QNetwork(nn.Module):
             nn.BatchNorm1d(64),
             nn.ReLU(),
 
-            nn.Linear(64, 5),
+            nn.Linear(64, action_size),
         )
 
     def forward(self, x):

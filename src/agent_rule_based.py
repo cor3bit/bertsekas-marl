@@ -23,18 +23,33 @@ class RuleBasedAgent(Agent):
         self._action_space = action_space
 
         # keep env to access specific method
-        self._fake_env = gym.make(SpiderAndFlyEnv)
-        assert self._fake_env._grid_shape == grid_shape
+        self._model = gym.make(SpiderAndFlyEnv)
+        assert self._model._grid_shape == grid_shape
 
     def act(self, obs, **kwargs):
-        n_actions = self._action_space.n
-
         curr_pos = self._get_agent_pos(obs)
         alive_prey_coords = self._get_alive_prey_coords(obs)
+        action_distances = self._get_action_distances(curr_pos, alive_prey_coords)
+
+        return action_distances.argmin()
+
+    def act_with_info(self, obs, **kwargs):
+        curr_pos = self._get_agent_pos(obs)
+        alive_prey_coords = self._get_alive_prey_coords(obs)
+        action_distances = self._get_action_distances(curr_pos, alive_prey_coords)
+
+        return action_distances.argmin(), action_distances
+
+    def _get_action_distances(
+            self,
+            curr_pos,
+            alive_prey_coords,
+    ):
+        n_actions = self._action_space.n
 
         action_distances = np.full((n_actions,), fill_value=np.inf, dtype=np.float32)
         for action_id in range(n_actions):
-            next_pos = self._fake_env._apply_action(curr_pos, action_id)
+            next_pos = self._model._apply_action(curr_pos, action_id)
             if next_pos is not None:
                 min_d = np.inf
                 for alive_prey_row, alive_prey_col in alive_prey_coords:
@@ -44,13 +59,13 @@ class RuleBasedAgent(Agent):
 
                 action_distances[action_id] = min_d
 
-        return action_distances.argmin()
+        return action_distances
 
     def _convert_to_pos(
             self,
             pos_scaled: Tuple[np.float32, np.float32],
     ) -> Tuple[int, int]:
-        grid_row, grid_col = self._fake_env._grid_shape
+        grid_row, grid_col = self._model._grid_shape
         row_pos_scaled, col_pos_scaled = pos_scaled
         row_pos = int(np.round((grid_row - 1) * row_pos_scaled, 0))
         col_pos = int(np.round((grid_col - 1) * col_pos_scaled, 0))

@@ -30,6 +30,7 @@ class ExactRolloutAgent(Agent):
             self,
             obs: Iterable[float],
             prev_actions: Dict[int, int] = None,
+            **kwargs,
     ) -> int:
         assert prev_actions is not None
 

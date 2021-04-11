@@ -1,5 +1,7 @@
 from time import perf_counter
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
+from tqdm import tqdm
 import numpy as np
 import gym
 import torch
@@ -8,23 +10,19 @@ import torch.optim as optim
 import ma_gym  # register new envs on import
 
 from src.constants import SpiderAndFlyEnv, BaselineModelPath_10x10_4v2
-from src.baseline_agent import BaselineAgent
 from src.qnetwork import QNetwork
+from src.agent_rule_based import RuleBasedAgent
 
-N_AGENTS = 4
-N_PREY = 2
+M_AGENTS = 4
+P_PREY = 2
 
 N_SAMPLES = 2_000_000
 
-BATCH_SIZE = 256
+BATCH_SIZE = 512
 
 EPOCHS = 20
 
 SEED = 42
-
-
-# data_train = DataLoader(dataset = data, batch_size = BATCH_SIZE, shuffle =False)
-# criterion = nn.MSELoss()
 
 
 def generate_samples(n_samples, seed):
@@ -37,48 +35,50 @@ def generate_samples(n_samples, seed):
 
     env.seed(seed)
 
-    while len(samples) < n_samples:
-        # init env
-        obs_n = env.reset()
+    with tqdm(total=n_samples) as pbar:
+        while len(samples) < n_samples:
+            # init env
+            obs_n = env.reset()
 
-        # init agents
-        n_agents = env.n_agents
-        n_preys = env.n_preys
-        agents = [BaselineAgent(i, n_agents, n_preys, env.action_space[i]) for i in range(n_agents)]
+            # init agents
+            m_agents = env.n_agents
+            p_preys = env.n_preys
+            grid_shape = env._grid_shape
 
-        # init stopping condition
-        done_n = [False] * n_agents
+            agents = [RuleBasedAgent(i, m_agents, p_preys, grid_shape, env.action_space[i]) for i in range(m_agents)]
 
-        # run 100 episodes for a random agent
-        while not all(done_n):
-            # for each agent calculates Manhattan Distance to each prey for each
-            # possible action
-            # O(n*m*q)
-            distances = env.get_distances()
+            # init stopping condition
+            done_n = [False] * m_agents
 
-            # transform into samples
-            obs_first = np.array(obs_n[0], dtype=np.float32).flatten()  # same for all agent
-            for i, a_dist in enumerate(distances):
-                agent_ohe = np.zeros(shape=(n_agents,), dtype=np.float32)
-                agent_ohe[i] = 1.
+            # run 100 episodes for a random agent
+            while not all(done_n):
+                # for each agent calculates Manhattan Distance to each prey for each
 
-                min_prey = a_dist.min(axis=1).astype(np.float32)
+                # transform into samples
+                obs_first = np.array(obs_n[0], dtype=np.float32).flatten()  # same for all agent
 
-                x = np.concatenate((obs_first, agent_ohe))
-                y = -min_prey
+                act_n = []
+                for i, (agent, obs) in enumerate(zip(agents, obs_n)):
+                    agent_ohe = np.zeros(shape=(m_agents,), dtype=np.float32)
+                    agent_ohe[i] = 1.
 
-                samples.append((x, y))
+                    action_id, action_distances = agent.act_with_info(obs)
 
-            # all agents act based on the observation
-            act_n = []
-            for agent, obs, action_distances in zip(agents, obs_n, distances):
-                max_action = agent.act(action_distances, )
-                act_n.append(max_action)
+                    if np.inf in action_distances:
+                        max_without_inf = np.max(action_distances[~np.isinf(action_distances)])
+                        action_distances[action_distances == np.inf] = max_without_inf
 
-            # update step ->
-            obs_n, reward_n, done_n, info = env.step(act_n)
+                    x = np.concatenate((obs_first, agent_ohe))
+                    y = -action_distances
+                    samples.append((x, y))
+                    pbar.update(1)
 
-        env.close()
+                    act_n.append(action_id)
+
+                # update step
+                obs_n, reward_n, done_n, info = env.step(act_n)
+
+    env.close()
 
     print('Finished sample generation.')
 
@@ -92,7 +92,7 @@ def train_qnetwork(samples):
 
     print(f'Found device: {device}.')
 
-    net = QNetwork(N_AGENTS, N_PREY)
+    net = QNetwork(M_AGENTS, P_PREY, 5)
 
     net.to(device)
 
@@ -107,12 +107,11 @@ def train_qnetwork(samples):
                                               shuffle=True)
 
     for epoch in range(EPOCHS):  # loop over the dataset multiple times
-
-        running_loss = 0.0
+        running_loss = .0
         n_batches = 0
 
-        for i, data in enumerate(data_loader, 0):
-            # get the inputs; data is a list of [inputs, labels]
+        for data in data_loader:
+            # TODO optimize
             inputs, labels = data[0].to(device), data[1].to(device)
 
             # zero the parameter gradients
@@ -127,20 +126,15 @@ def train_qnetwork(samples):
 
             optimizer.step()
 
-            # print statistics
+            # logging
             running_loss += loss.item()
             n_batches += 1
 
-            # if i % 200 == 199:  # print every 2000 mini-batches
-            #     print('[%d, %5d] loss: %.3f' %
-            #           (epoch + 1, i + 1, running_loss / 200))
-            #
-            #     running_loss = 0.0
+        print(f'[{epoch}] {running_loss / n_batches:.3f}.')
 
+        # save interim results
         if epoch % 10 == 0:
             torch.save(net.state_dict(), BaselineModelPath_10x10_4v2)
-
-        print(f'[{epoch}] {running_loss / n_batches:.3f}.')
 
     print('Finished Training.')
 
@@ -166,7 +160,18 @@ if __name__ == '__main__':
 
     # run experiment
     t1 = perf_counter()
-    train_samples = generate_samples(N_SAMPLES, SEED)
+    n_workers = 5
+    chunk = int(N_SAMPLES / n_workers)
+    train_samples = []
+
+    with ProcessPoolExecutor(max_workers=n_workers) as pool:
+        futures = []
+        for _ in range(n_workers):
+            futures.append(pool.submit(generate_samples, chunk, SEED))
+
+        for f in as_completed(futures):
+            samples_part = f.result()
+            train_samples += samples_part
 
     t2 = perf_counter()
     net = train_qnetwork(train_samples)
