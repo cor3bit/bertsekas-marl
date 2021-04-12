@@ -31,7 +31,7 @@ $ python run_agent.py
 
 Baseline Policy (Shortest Distance)        |  Exact Multiagent Rollout     | Approximate Multiagent Rollout     | 
 :-------------------------:|:-------------------------:|:-------------------------:|
-![](artifacts/baseline.gif)  |  ![](artifacts/dl_poisson.png) |![](artifacts/dl_poisson.png) |
+![](artifacts/baseline.gif)  |  ![](artifacts/exact_rollout.gif) |![](artifacts/approx_rollout.gif) |
 
 
 
