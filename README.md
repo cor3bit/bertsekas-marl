@@ -1,7 +1,7 @@
 ## Multiagent Reinforcement Learning: Rollout and Policy Iteration
 
 
-Parallel Implementation of the Multiagent Rollout
+Implementation of the Multiagent Rollout
 based on the 
 paper by Dimitri Bertsekas (2020).
 
@@ -21,27 +21,15 @@ modifying the PredatorPrey env.
 $ pip install -r requirements.txt
 ```
 
-- Run the Baseline Agent from the `scripts` folder:
+- Run the agent simulation from the `scripts` folder:
 
 ```
-$ python run_baseline_agent_nn.py
-```
-
-- Run the Agent-by-Agent Rollout from the `scripts` folder:
-
-```
-$ python run_rollout_agent.py
-```
-
-- Run the Autonomous Rollout from the `scripts` folder:
-
-```
-$ python run_autonomous_rollout_agent.py
+$ python run_agent.py
 ```
 
 ### Results
 
-Baseline Policy        |  Agent-by-Agent Rollout     | Autonomous Rollout     |
+Baseline Policy (Shortest Distance)        |  Exact Multiagent Rollout     | Approximate Multiagent Rollout     | 
 :-------------------------:|:-------------------------:|:-------------------------:|
 ![](artifacts/baseline.gif)  |  ![](artifacts/dl_poisson.png) |![](artifacts/dl_poisson.png) |
 

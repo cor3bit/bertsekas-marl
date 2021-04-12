@@ -5,7 +5,7 @@ import numpy as np
 import gym
 import ma_gym  # register new envs on import
 
-from agents.constants import SpiderAndFlyEnv
+from src.constants import SpiderAndFlyEnv
 
 N_AGENTS = 4
 

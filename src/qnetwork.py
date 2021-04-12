@@ -1,9 +1,9 @@
 import torch.nn as nn
 
 
-class QNetworkRollout(nn.Module):
+class QNetwork(nn.Module):
     def __init__(self, m_agents, p_preys, action_size):
-        super(QNetworkRollout, self).__init__()
+        super(QNetwork, self).__init__()
 
         # coords of agents & preys + alive status + OHE vector of agents (active agent)
         state_dims = (m_agents + p_preys) * 2 + p_preys

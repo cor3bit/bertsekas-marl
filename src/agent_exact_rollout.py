@@ -4,11 +4,12 @@ import numpy as np
 import gym
 import ma_gym
 
-from agents.constants import SpiderAndFlyEnv
-from agents.rule_based_agent import RuleBasedAgent
+from src.constants import SpiderAndFlyEnv
+from src.agent_rule_based import RuleBasedAgent
+from src.agent import Agent
 
 
-class ExactRolloutAgent:
+class ExactRolloutAgent(Agent):
     def __init__(
             self,
             agent_id: int,
@@ -28,8 +29,11 @@ class ExactRolloutAgent:
     def act(
             self,
             obs: Iterable[float],
-            prev_actions: Dict[int, int],
+            prev_actions: Dict[int, int] = None,
+            **kwargs,
     ) -> int:
+        assert prev_actions is not None
+
         n_actions = self._action_space.n
         q_values = np.full((n_actions,), fill_value=-np.inf, dtype=np.float32)
 
@@ -59,8 +63,8 @@ class ExactRolloutAgent:
 
     def _simulate(
             self,
-            obs: Iterable[float],
-            act_n: np.array,
+            initial_obs: Iterable[float],
+            initial_step: np.array,
     ) -> float:
         avg_total_reward = .0
 
@@ -74,10 +78,10 @@ class ExactRolloutAgent:
 
         # run N simulations
         for _ in range(self._n_sim_per_step):
-            obs_n = env.reset_from(obs)
+            obs_n = env.reset_from(initial_obs)
 
             # 1 step
-            obs_n, reward_n, done_n, info = env.step(act_n)
+            obs_n, reward_n, done_n, info = env.step(initial_step)
             avg_total_reward += np.sum(reward_n)
 
             # run an episode until all prey is caught

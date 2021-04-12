@@ -6,10 +6,10 @@ import gym
 import ma_gym  # register new envs on import
 from tqdm import tqdm
 
-from agents.constants import SpiderAndFlyEnv, AgentType
-from agents.random_agent import RandomAgent
-from agents.rule_based_agent import RuleBasedAgent
-from agents.exact_rollout_agent import ExactRolloutAgent
+from src.constants import SpiderAndFlyEnv, AgentType
+from src.agent_random import RandomAgent
+from src.agent_rule_based import RuleBasedAgent
+from src.agent_exact_rollout import ExactRolloutAgent
 
 SEED = 42
 N_EPISODES = 10
@@ -61,7 +61,7 @@ def run_agent(agent_type):
                 if isinstance(agent, ExactRolloutAgent):
                     action_id = agent.act(obs, prev_actions)
                 else:
-                    action_id = agent.act(obs)
+                    action_id = agent.act(obs, )
 
                 prev_actions[i] = action_id
                 act_n.append(action_id)
