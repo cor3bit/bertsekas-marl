@@ -27,6 +27,12 @@ $ pip install -r requirements.txt
 $ python run_agent.py
 ```
 
+- Run agents' comparison from the `scripts` folder:
+
+```
+$ python run_comparison.py
+```
+
 ### Results
 
 Baseline Policy (Shortest Distance)        |  Exact Multiagent Rollout     | Approximate Multiagent Rollout     | 

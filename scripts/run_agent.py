@@ -1,8 +1,11 @@
 import time
 from typing import List
 
+from tqdm import tqdm
+import numpy as np
 import gym
 import ma_gym  # register new envs on import
+from ma_gym.wrappers import Monitor
 
 from src.constants import SpiderAndFlyEnv, AgentType
 from src.agent_random import RandomAgent
@@ -10,8 +13,8 @@ from src.agent_rule_based import RuleBasedAgent
 from src.agent_exact_rollout import ExactRolloutAgent
 from src.agent_approx_rollout import RolloutAgent
 
-N_EPISODES = 3
-AGENT_TYPE = AgentType.APRX_ROLLOUT
+N_EPISODES = 5
+AGENT_TYPE = AgentType.EXACT_ROLLOUT
 
 
 def create_agents(env: gym.Env, agent_type: str) -> List:
@@ -38,11 +41,14 @@ def create_agents(env: gym.Env, agent_type: str) -> List:
 
 
 if __name__ == '__main__':
+    np.random.seed(42)
+
     # create Spider-and-Fly game
     env = gym.make(SpiderAndFlyEnv)
+    env.seed(42)
     # env = Monitor(env, directory='../artifacts/recordings', force=True,)
 
-    for _ in range(N_EPISODES):
+    for i_episode in tqdm(range(N_EPISODES)):
         # init env
         # obs_n = env.reset()
         obs_n = env.reset_default()
@@ -53,6 +59,8 @@ if __name__ == '__main__':
 
         # init stopping condition
         done_n = [False] * env.n_agents
+
+        total_reward = .0
 
         # run an episode until all prey is caught
         while not all(done_n):
@@ -67,8 +75,12 @@ if __name__ == '__main__':
             # update step
             obs_n, reward_n, done_n, info = env.step(act_n)
 
+            total_reward += np.sum(reward_n)
+
             time.sleep(0.5)
             env.render()
+
+        print(f'Episode {i_episode}: Avg Reward is {total_reward / env.n_agents}')
 
     time.sleep(2.)
 
