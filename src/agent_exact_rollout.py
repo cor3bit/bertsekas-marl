@@ -63,8 +63,8 @@ class ExactRolloutAgent(Agent):
 
     def _simulate(
             self,
-            obs: Iterable[float],
-            act_n: np.array,
+            initial_obs: Iterable[float],
+            initial_step: np.array,
     ) -> float:
         avg_total_reward = .0
 
@@ -78,10 +78,10 @@ class ExactRolloutAgent(Agent):
 
         # run N simulations
         for _ in range(self._n_sim_per_step):
-            obs_n = env.reset_from(obs)
+            obs_n = env.reset_from(initial_obs)
 
             # 1 step
-            obs_n, reward_n, done_n, info = env.step(act_n)
+            obs_n, reward_n, done_n, info = env.step(initial_step)
             avg_total_reward += np.sum(reward_n)
 
             # run an episode until all prey is caught
