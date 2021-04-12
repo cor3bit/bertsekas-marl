@@ -378,6 +378,13 @@ class PredatorPrey(gym.Env):
 
             return self.get_agent_obs(), rewards, self._agent_dones, {'prey_alive': self._prey_alive}
 
+    def apply_move(self, agent_id, action):
+        # one agent moves
+        if not (self._agent_dones[agent_id]):
+            self.__update_agent_pos(agent_id, action)
+
+        return self.get_agent_obs()
+
     def __get_neighbour_coordinates(self, pos):
         neighbours = []
         if self.is_valid([pos[0] + 1, pos[1]]):
@@ -427,39 +434,6 @@ class PredatorPrey(gym.Env):
         if self.viewer is not None:
             self.viewer.close()
             self.viewer = None
-
-    def get_distances(self):
-        distances = []
-
-        n_actions = len(ACTION_MEANING)
-
-        for agent_curr_pos in self.agent_pos.values():
-            # initialize to inf (max distance)
-            a_distances = np.full(shape=(n_actions, self.n_preys), fill_value=np.inf, dtype=np.float32)
-
-            for action in ACTION_MEANING:
-                # apply selected action  to the current position
-                modified_agent_pos = self._apply_action(agent_curr_pos, action)
-                if modified_agent_pos is not None:
-                    for j, p_pos in self.prey_pos.items():
-                        if self._prey_alive[j]:
-                            # calc MD
-                            md = np.abs(p_pos[0] - modified_agent_pos[0]) + np.abs(p_pos[1] - modified_agent_pos[1])
-                            a_distances[action, j] = md
-
-            # post-processing: replace dist from invalid moves (inf) with distance of MAX+1
-            for col in a_distances.T:
-                if np.inf in col and not np.all(col == np.inf):
-                    max_dist = np.max(col[col != np.inf])
-                    col[col == np.inf] = max_dist + 1
-
-            # check that to action yields (inf, inf)
-            has_inf = np.all(a_distances == np.inf, axis=1)
-            assert True not in has_inf
-
-            distances.append(a_distances)
-
-        return distances
 
     def _apply_action(self, curr_pos, move):
         # curr_pos = copy.copy(self.agent_pos[agent_i])
