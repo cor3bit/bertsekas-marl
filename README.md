@@ -35,10 +35,12 @@ $ python run_comparison.py
 
 ### Results
 
-Baseline Policy (Shortest Distance)        |  Exact Multiagent Rollout     | Approximate Multiagent Rollout     | 
+Baseline Policy        |  Standard Rollout     |Agent-by-agent Rollout     |
 :-------------------------:|:-------------------------:|:-------------------------:|
-![](artifacts/baseline.gif)  |  ![](artifacts/exact_rollout.gif) |![](artifacts/approx_rollout.gif) |
+![](artifacts/baseline.gif)  |  ![](artifacts/std_rollout.gif) |![](artifacts/agent_by_agent_rollout.gif) |
 
+Note: Baseline Policy means moving along the shortest path 
+to the closest surviving fly.
 
 
 ### References
