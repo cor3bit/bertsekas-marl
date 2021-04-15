@@ -3,7 +3,7 @@
 
 Implementation of the Multiagent Rollout
 based on the 
-paper by Dimitri Bertsekas (2020).
+paper by Dimitri Bertsekas (2021).
 
 
 ### Environment
@@ -46,9 +46,9 @@ to the closest surviving fly.
 ### References
 
 1. Dimitri Bertsekas - Multiagent Reinforcement Learning: Rollout and 
-   Policy Iteration (2020).
-   Web: https://web.mit.edu/dimitrib/www/Multiagent_Sinica_2020.pdf
-   
+   Policy Iteration (2021).
+   Web: https://ieeexplore.ieee.org/document/9317713
+      
 2. Anurag Koul - ma-gym: Collection of multi-agent environments based 
    on OpenAI gym (2019). Web: https://github.com/koulanurag/ma-gym
    
