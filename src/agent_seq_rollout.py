@@ -76,6 +76,51 @@ class SequentialRolloutAgent(Agent):
 
         return best_action
 
+    def act_with_info(
+            self,
+            obs: Iterable[float],
+            prev_actions: Dict[int, int] = None,
+            **kwargs,
+    ) -> int:
+        n_actions = self._action_space.n
+
+        # parallel vars
+        sim_results = []
+
+        with ProcessPoolExecutor(max_workers=self._n_workers) as pool:
+            futures = []
+
+            for action_id in range(n_actions):
+                # 1st step - optimal actions from previous agents,
+                # simulated step from current agent,
+                # greedy (baseline) from undecided agents
+                act_n = np.empty((self._m_agents,), dtype=np.int8)
+                for i in range(self._m_agents):
+                    if i in prev_actions:
+                        act_n[i] = prev_actions[i]
+                    elif self.id == i:
+                        act_n[i] = action_id
+                    else:
+                        rb_agent = RuleBasedAgent(i, self._m_agents, self._p_preys,
+                                                  self._grid_shape, self._action_space)
+                        act_n[i] = rb_agent.act(obs)
+
+                # run N simulations
+                futures.append(pool.submit(
+                    self._simulate, action_id, obs, act_n, self._m_agents, self._p_preys,
+                    self._grid_shape, self._action_space, self._n_sim_per_step,
+                ))
+
+            for f in as_completed(futures):
+                res = f.result()
+                sim_results.append(res)
+
+        best_action = max(sim_results, key=itemgetter(1))[0]
+
+        # best_action, q_values_sim, actions_other_agents
+
+        return best_action, sim_results, act_n
+
     @staticmethod
     def _simulate(
             action_id,

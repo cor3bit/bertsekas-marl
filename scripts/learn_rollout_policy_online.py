@@ -11,15 +11,14 @@ import torch.optim as optim
 
 from src.constants import SpiderAndFlyEnv, RolloutModelPath_10x10_4v2
 from src.qnetwork import QNetwork
+from src.qnetwork_coordinated import QNetworkCoordinated
 from src.agent_rule_based import RuleBasedAgent
 from src.agent_approx_rollout import RolloutAgent
 
-N_EPISODES = 3
-
+N_EPISODES = 20
 N_SIMS_PER_STEP = 10
-
 BATCH_SIZE = 512
-EPOCHS = 1
+EPOCHS = 10
 
 
 def simulate(
@@ -29,6 +28,7 @@ def simulate(
         qnet,
         fake_env,
         action_space,
+        epsilon,
 ) -> float:
     avg_total_reward = .0
 
@@ -52,10 +52,10 @@ def simulate(
             prev_actions = {}
 
             for agent_id, obs in enumerate(obs_n):
-                obs_after_coordination = update_obs(fake_env, obs, prev_actions)
+                # obs_after_coordination = update_obs(fake_env, obs, prev_actions)
 
                 action_taken = epsilon_greedy_step(
-                    obs_after_coordination, m_agents, agent_id, qnet, action_space)
+                    obs, m_agents, agent_id, qnet, action_space, prev_actions, epsilon)
 
                 prev_actions[agent_id] = action_taken
                 act_n.append(action_taken)
@@ -73,7 +73,7 @@ def simulate(
     return avg_total_reward
 
 
-def convert_to_x(obs, m_agents, agent_id):
+def convert_to_x(obs, m_agents, agent_id, action_space, prev_actions):
     # state
     obs_first = np.array(obs, dtype=np.float32).flatten()
 
@@ -81,12 +81,27 @@ def convert_to_x(obs, m_agents, agent_id):
     agent_ohe = np.zeros(shape=(m_agents,), dtype=np.float32)
     agent_ohe[agent_id] = 1.
 
-    x = np.concatenate((obs_first, agent_ohe))
+    # prev actions
+    prev_actions_ohe = np.zeros(shape=(m_agents * action_space.n,), dtype=np.float32)
+    for agent_i, action_i in prev_actions.items():
+        ohe_action_index = int(agent_i * action_space.n) + action_i
+        prev_actions_ohe[ohe_action_index] = 1.
+
+    # combine all
+    x = np.concatenate((obs_first, agent_ohe, prev_actions_ohe))
 
     return x
 
 
-def epsilon_greedy_step(obs, m_agents, agent_id, qnet, action_space, epsilon=0.05):
+def epsilon_greedy_step(
+        obs,
+        m_agents,
+        agent_id,
+        qnet,
+        action_space,
+        prev_actions,
+        epsilon,
+) -> int:
     p = np.random.random()
     if p < epsilon:
         # random action -> exploration
@@ -96,7 +111,7 @@ def epsilon_greedy_step(obs, m_agents, agent_id, qnet, action_space, epsilon=0.0
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         # argmax -> exploitation
-        x = convert_to_x(obs, m_agents, agent_id)
+        x = convert_to_x(obs, m_agents, agent_id, action_space, prev_actions)
         x = np.reshape(x, newshape=(1, -1))
         # v = torch.from_numpy(x)
         v = torch.tensor(x, device=device)
@@ -104,7 +119,11 @@ def epsilon_greedy_step(obs, m_agents, agent_id, qnet, action_space, epsilon=0.0
         return np.argmax(qs.data.cpu().numpy())
 
 
-def epsilon_greedy_step_from_array(qvalues, action_space, epsilon=0.05):
+def epsilon_greedy_step_from_array(
+        qvalues,
+        action_space,
+        epsilon,
+):
     p = np.random.random()
     if p < epsilon:
         # random action -> exploration
@@ -123,6 +142,18 @@ def update_obs(env, obs, prev_actions):
         return obs_new[0]
     else:
         return obs
+
+
+def get_epsilon(episode_i: int, episodes_n: int) -> float:
+    # TODO
+
+    # First 10%
+    if episode_i < episodes_n * 0.1:
+        return 0.2
+
+    #
+
+    return 0.05
 
 
 def train_qnet(qnet, samples):
@@ -164,7 +195,7 @@ def learn_policy():
     env = gym.make(SpiderAndFlyEnv)
     env.seed(42)
 
-    # used only for modeling
+    # used only for specific env methods
     fake_env = gym.make(SpiderAndFlyEnv)
     fake_env.seed(1)
 
@@ -174,20 +205,16 @@ def learn_policy():
     grid_shape = env._grid_shape
     action_space = env.action_space[0]
 
-    # base net
-    # base_qnet = QNetwork(m_agents, p_preys, action_space.n)
-    # base_qnet.load_state_dict(torch.load(RolloutModelPath_10x10_4v2))
-    # base_qnet.eval()
-
     # rollout net
-    rollout_qnet = QNetwork(m_agents, p_preys, action_space.n)
-    rollout_qnet.load_state_dict(torch.load(RolloutModelPath_10x10_4v2))
-    # rollout_qnet.train()
+    qnet = QNetworkCoordinated(m_agents, p_preys, action_space.n)
+    # qnet.load_state_dict(torch.load(RolloutModelPath_10x10_4v2))
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    rollout_qnet.to(device)
+    qnet.to(device)
 
-    for _ in tqdm(range(N_EPISODES)):
+    for episode_i in tqdm(range(N_EPISODES)):
+        eps = get_epsilon(episode_i, N_EPISODES)
+
         # init env
         obs_n = env.reset()
 
@@ -211,34 +238,47 @@ def learn_policy():
                     # 1st step - optimal actions from previous agents,
                     # simulated step from current agent,
                     # greedy (baseline) from undecided agents
-                    sub_actions = np.empty((m_agents,), dtype=np.int8)
+                    initial_step = np.empty((m_agents,), dtype=np.int8)
 
                     for i in range(m_agents):
                         if i in prev_actions:
-                            sub_actions[i] = prev_actions[i]
+                            initial_step[i] = prev_actions[i]
                         elif agent_id == i:
-                            sub_actions[i] = action_id
+                            initial_step[i] = action_id
 
                             new_actions[i] = action_id
                         else:
                             # update obs with info about prev steps
-                            obs_after_coordination = update_obs(fake_env, obs, {**prev_actions, **new_actions})
-                            best_action = epsilon_greedy_step(
-                                obs_after_coordination, m_agents, i, rollout_qnet, action_space)
+                            # obs_after_coordination = update_obs(fake_env, obs, {**prev_actions, **new_actions})
 
-                            sub_actions[i] = best_action
+                            best_action = epsilon_greedy_step(
+                                obs,
+                                m_agents,
+                                i,
+                                qnet,
+                                action_space,
+                                {**prev_actions, **new_actions},
+                                epsilon=eps,
+                            )
+
+                            initial_step[i] = best_action
+
                             new_actions[i] = best_action
 
                     # run N simulations
-                    avg_total_reward = simulate(obs, sub_actions, m_agents, rollout_qnet, fake_env, action_space)
+                    avg_total_reward = simulate(obs, initial_step, m_agents, qnet, fake_env, action_space, eps)
 
                     q_values[action_id] = avg_total_reward
 
                 # adds sample to the dataset
-                agent_ohe = np.zeros(shape=(m_agents,), dtype=np.float32)
-                agent_ohe[agent_id] = 1.
-                obs_after_coordination = np.array(update_obs(fake_env, obs, prev_actions), dtype=np.float32)
-                x = np.concatenate((obs_after_coordination, agent_ohe))
+                # agent_ohe = np.zeros(shape=(m_agents,), dtype=np.float32)
+                # agent_ohe[agent_id] = 1.
+                # # obs_after_coordination = np.array(update_obs(fake_env, obs, prev_actions), dtype=np.float32)
+                # prev_actions_ohe = np.zeros(shape=(m_agents * action_space.n,), dtype=np.float32)
+                #
+                # x = np.concatenate((obs, agent_ohe, prev_actions_ohe))
+
+                x = convert_to_x(obs, m_agents, agent_id, action_space, prev_actions)
                 samples.append((x, q_values))
 
                 # TODO sanity check
@@ -246,7 +286,7 @@ def learn_policy():
                 # print(f'MC: {}')
 
                 # current policy
-                action_taken = epsilon_greedy_step_from_array(q_values, action_space)
+                action_taken = epsilon_greedy_step_from_array(q_values, action_space, epsilon=eps)
 
                 prev_actions[agent_id] = action_taken
                 act_n.append(action_taken)
@@ -255,12 +295,12 @@ def learn_policy():
             obs_n, reward_n, done_n, info = env.step(act_n)
 
             # update rollout policy with samples
-            rollout_qnet = train_qnet(rollout_qnet, samples)
+            qnet = train_qnet(qnet, samples)
 
     env.close()
 
     # save updated qnet
-    torch.save(rollout_qnet.state_dict(), RolloutModelPath_10x10_4v2)
+    torch.save(qnet.state_dict(), RolloutModelPath_10x10_4v2)
 
 
 # ------------- Runner -------------
