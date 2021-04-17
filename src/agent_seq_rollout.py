@@ -7,8 +7,9 @@ import numpy as np
 import gym
 import ma_gym
 
-from src.constants import SpiderAndFlyEnv
+from src.constants import SpiderAndFlyEnv, AgentType
 from src.agent_rule_based import RuleBasedAgent
+from src.agent_qnet_based import QnetBasedAgent
 from src.agent import Agent
 
 
@@ -21,6 +22,7 @@ class SequentialRolloutAgent(Agent):
             grid_shape: Tuple[int, int],
             action_space: gym.spaces.Discrete,
             n_sim_per_step=10,
+            basis_agent_type=AgentType.RULE_BASED,
             n_workers=5,
     ):
         self.id = agent_id
@@ -29,6 +31,7 @@ class SequentialRolloutAgent(Agent):
         self._grid_shape = grid_shape
         self._action_space = action_space
         self._n_sim_per_step = n_sim_per_step
+        self._agent_cls = RuleBasedAgent if basis_agent_type == AgentType.RULE_BASED else QnetBasedAgent
         self._n_workers = n_workers
 
     def act(
@@ -58,8 +61,8 @@ class SequentialRolloutAgent(Agent):
                     elif self.id == i:
                         act_n[i] = action_id
                     else:
-                        rb_agent = RuleBasedAgent(i, self._m_agents, self._p_preys,
-                                                  self._grid_shape, self._action_space)
+                        rb_agent = self._agent_cls(i, self._m_agents, self._p_preys,
+                                                   self._grid_shape, self._action_space)
                         act_n[i] = rb_agent.act(obs)
 
                 # run N simulations
@@ -87,33 +90,41 @@ class SequentialRolloutAgent(Agent):
         # parallel vars
         sim_results = []
 
-        with ProcessPoolExecutor(max_workers=self._n_workers) as pool:
-            futures = []
+        # with ProcessPoolExecutor(max_workers=self._n_workers) as pool:
+        #     futures = []
 
-            for action_id in range(n_actions):
-                # 1st step - optimal actions from previous agents,
-                # simulated step from current agent,
-                # greedy (baseline) from undecided agents
-                act_n = np.empty((self._m_agents,), dtype=np.int8)
-                for i in range(self._m_agents):
-                    if i in prev_actions:
-                        act_n[i] = prev_actions[i]
-                    elif self.id == i:
-                        act_n[i] = action_id
-                    else:
-                        rb_agent = RuleBasedAgent(i, self._m_agents, self._p_preys,
-                                                  self._grid_shape, self._action_space)
-                        act_n[i] = rb_agent.act(obs)
+        for action_id in range(n_actions):
+            # 1st step - optimal actions from previous agents,
+            # simulated step from current agent,
+            # greedy (baseline) from undecided agents
+            first_step_prev_actions = dict(prev_actions)
+            act_n = np.empty((self._m_agents,), dtype=np.int8)
+            for i in range(self._m_agents):
+                if i in prev_actions:
+                    act_n[i] = prev_actions[i]
+                elif self.id == i:
+                    act_n[i] = action_id
+                    first_step_prev_actions[i] = action_id
+                else:
+                    rb_agent = self._agent_cls(i, self._m_agents, self._p_preys,
+                                               self._grid_shape, self._action_space)
+                    assumed_action = rb_agent.act(obs, prev_actions=first_step_prev_actions)
+                    act_n[i] = assumed_action
+                    first_step_prev_actions[i] = assumed_action
 
-                # run N simulations
-                futures.append(pool.submit(
-                    self._simulate, action_id, obs, act_n, self._m_agents, self._p_preys,
-                    self._grid_shape, self._action_space, self._n_sim_per_step,
-                ))
+            res = self._simulate(action_id, obs, act_n, self._m_agents, self._p_preys,
+                                 self._grid_shape, self._action_space, self._n_sim_per_step, self._agent_cls, )
+            sim_results.append(res)
 
-            for f in as_completed(futures):
-                res = f.result()
-                sim_results.append(res)
+            # run N simulations
+            # futures.append(pool.submit(
+            #     self._simulate, action_id, obs, act_n, self._m_agents, self._p_preys,
+            #     self._grid_shape, self._action_space, self._n_sim_per_step, self._agent_cls,
+            # ))
+
+            # for f in as_completed(futures):
+            #     res = f.result()
+            #     sim_results.append(res)
 
         best_action = max(sim_results, key=itemgetter(1))[0]
 
@@ -131,6 +142,7 @@ class SequentialRolloutAgent(Agent):
             grid_shape,
             action_space,
             n_sim_per_step,
+            agent_cls,
     ) -> Tuple[int, float]:
         avg_total_reward = .0
 
@@ -138,8 +150,8 @@ class SequentialRolloutAgent(Agent):
         env = gym.make(SpiderAndFlyEnv)
 
         # create agents
-        agents = [RuleBasedAgent(i, m_agents,
-                                 p_preys, grid_shape, action_space)
+        agents = [agent_cls(i, m_agents,
+                            p_preys, grid_shape, action_space)
                   for i in range(m_agents)]
 
         # run N simulations
@@ -155,8 +167,11 @@ class SequentialRolloutAgent(Agent):
 
                 # all agents act based on the observation
                 act_n = []
+                prev_actions = {}
                 for agent, obs in zip(agents, obs_n):
-                    act_n.append(agent.act(obs))
+                    best_action = agent.act(obs, prev_actions=prev_actions)
+                    act_n.append(best_action)
+                    prev_actions[agent.id] = best_action
 
                 # update step
                 obs_n, reward_n, done_n, info = env.step(act_n)

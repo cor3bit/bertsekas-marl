@@ -11,10 +11,10 @@ from src.constants import SpiderAndFlyEnv, AgentType
 from src.agent_random import RandomAgent
 from src.agent_rule_based import RuleBasedAgent
 from src.agent_seq_rollout import SequentialRolloutAgent
-from src.agent_approx_rollout import ApproxRolloutAgent
+from src.agent_qnet_based import ApproxRolloutAgent
 
 N_EPISODES = 3
-AGENT_TYPE = AgentType.APRX_ROLLOUT
+AGENT_TYPE = AgentType.QNET_BASED
 
 
 def create_agents(env: gym.Env, agent_type: str) -> List:
@@ -31,7 +31,7 @@ def create_agents(env: gym.Env, agent_type: str) -> List:
     elif agent_type == AgentType.SEQ_MA_ROLLOUT:
         agents = [SequentialRolloutAgent(i, m_agents, p_preys, grid_shape, env.action_space[i])
                   for i in range(m_agents)]
-    elif agent_type == AgentType.APRX_ROLLOUT:
+    elif agent_type == AgentType.QNET_BASED:
         agents = [ApproxRolloutAgent(i, m_agents, p_preys, grid_shape, env.action_space[i])
                   for i in range(m_agents)]
     else:

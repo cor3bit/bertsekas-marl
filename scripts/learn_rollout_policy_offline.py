@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch.optim as optim
 import ma_gym  # register new envs on import
 
-from src.constants import SpiderAndFlyEnv, RolloutModelPath_10x10_4v2
+from src.constants import SpiderAndFlyEnv, RolloutModelPath_10x10_4v2, AgentType, RepeatedRolloutModelPath_10x10_4v2
 from src.qnetwork_coordinated import QNetworkCoordinated
 from src.agent_seq_rollout import SequentialRolloutAgent
 
@@ -18,11 +18,14 @@ SEED = 42
 M_AGENTS = 4
 P_PREY = 2
 
-N_SAMPLES = 200_000
+N_SAMPLES = 100
 BATCH_SIZE = 1024
 EPOCHS = 500
-FROM_SCRATCH = False
 N_SIMS_MC = 50
+FROM_SCRATCH = False
+INPUT_QNET_NAME = RepeatedRolloutModelPath_10x10_4v2
+OUTPUT_QNET_NAME = RepeatedRolloutModelPath_10x10_4v2
+BASIS_POLICY_AGENT = AgentType.QNET_BASED
 
 
 def generate_samples(n_samples, seed):
@@ -47,9 +50,12 @@ def generate_samples(n_samples, seed):
             grid_shape = env._grid_shape
             action_space = env.action_space[0]
 
-            agents = [SequentialRolloutAgent(i, m_agents, p_preys, grid_shape,
-                                             env.action_space[i], n_sim_per_step=N_SIMS_MC)
-                      for i in range(m_agents)]
+            agents = [SequentialRolloutAgent(
+                i, m_agents, p_preys, grid_shape, env.action_space[i],
+                n_sim_per_step=N_SIMS_MC,
+                basis_agent_type=BASIS_POLICY_AGENT,
+            )
+                for i in range(m_agents)]
 
             # init stopping condition
             done_n = [False] * m_agents
@@ -117,7 +123,7 @@ def train_qnetwork(samples):
 
     net = QNetworkCoordinated(M_AGENTS, P_PREY, 5)
     if not FROM_SCRATCH:
-        net.load_state_dict(torch.load(RolloutModelPath_10x10_4v2))
+        net.load_state_dict(torch.load(INPUT_QNET_NAME))
 
     net.to(device)
 
@@ -159,7 +165,7 @@ def train_qnetwork(samples):
 
         # save interim results
         if epoch % 10 == 0:
-            torch.save(net.state_dict(), RolloutModelPath_10x10_4v2)
+            torch.save(net.state_dict(), OUTPUT_QNET_NAME)
 
     print('Finished Training.')
 
@@ -182,7 +188,7 @@ if __name__ == '__main__':
     t3 = perf_counter()
 
     # save
-    torch.save(net.state_dict(), RolloutModelPath_10x10_4v2)
+    torch.save(net.state_dict(), OUTPUT_QNET_NAME)
 
     print(f'Generated samples in {(t2 - t1) / 60.:.2f} min.')
     print(f'Trained in {(t3 - t2) / 60.:.2f} min.')

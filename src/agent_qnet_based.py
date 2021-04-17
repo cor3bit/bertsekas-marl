@@ -5,12 +5,12 @@ import torch
 import gym
 
 from src.qnetwork_coordinated import QNetworkCoordinated
-from src.constants import RolloutModelPath_10x10_4v2
+from src.constants import RolloutModelPath_10x10_4v2, RepeatedRolloutModelPath_10x10_4v2
 from src.agent import Agent
 from src.agent_rule_based import RuleBasedAgent
 
 
-class ApproxRolloutAgent(Agent):
+class QnetBasedAgent(Agent):
     def __init__(
             self,
             agent_id: int,
@@ -18,20 +18,20 @@ class ApproxRolloutAgent(Agent):
             p_preys: int,
             grid_shape: Tuple[int, int],
             action_space: gym.spaces.Discrete,
-            n_sim_per_step: int = 10,
             qnet_name: str = None,
     ):
         self.id = agent_id
         self._m_agents = m_agents
         self._p_preys = p_preys
+        self._grid_shape = grid_shape
         self._action_space = action_space
 
         # load neural net on init
         self._nn = self._load_net(qnet_name)
 
         # for heuristic
-        self._rb_agents = [RuleBasedAgent(i, m_agents, p_preys,
-                                          grid_shape, action_space) for i in range(m_agents)]
+        # self._rb_agents = [RuleBasedAgent(i, m_agents, p_preys,
+        #                                   grid_shape, action_space) for i in range(m_agents)]
 
     def act(self, obs, prev_actions=None, epsilon=0.0, **kwargs):
         # 1) form 5 samples for each action
@@ -51,7 +51,7 @@ class ApproxRolloutAgent(Agent):
 
     def _load_net(self, qnet_name=None):
         net = QNetworkCoordinated(self._m_agents, self._p_preys, self._action_space.n)
-        net.load_state_dict(torch.load(RolloutModelPath_10x10_4v2 if qnet_name is None else qnet_name))
+        net.load_state_dict(torch.load(RepeatedRolloutModelPath_10x10_4v2 if qnet_name is None else qnet_name))
 
         # set dropout and batch normalization layers to evaluation mode
         net.eval()
