@@ -10,7 +10,7 @@ from src.agent import Agent
 from src.agent_rule_based import RuleBasedAgent
 
 
-class RolloutAgent(Agent):
+class ApproxRolloutAgent(Agent):
     def __init__(
             self,
             agent_id: int,
@@ -58,10 +58,9 @@ class RolloutAgent(Agent):
 
         return net
 
-    def _convert_to_x(self, obs_n, prev_actions):
-
+    def _convert_to_x(self, obs, prev_actions):
         # state
-        obs_first = np.array(obs_n, dtype=np.float32).flatten()
+        np_obs = np.array(obs, dtype=np.float32).flatten()
 
         # agent ohe
         agent_ohe = np.zeros(shape=(self._m_agents,), dtype=np.float32)
@@ -76,14 +75,14 @@ class RolloutAgent(Agent):
                 action_i = prev_actions[i]
                 ohe_action_index = int(i * self._action_space.n) + action_i
                 prev_actions_ohe[ohe_action_index] = 1.
-            else:
-                # TODO from RB agent OR ApproxAgent
-                rb_agent_i = self._rb_agents[i]
-                action_i = rb_agent_i.act(obs_first)
-                ohe_action_index = int(i * self._action_space.n) + action_i
-                prev_actions_ohe[ohe_action_index] = 1.
+            # else:
+            #     # TODO from RB agent OR ApproxAgent
+            #     rb_agent_i = self._rb_agents[i]
+            #     action_i = rb_agent_i.act(np_obs)
+            #     ohe_action_index = int(i * self._action_space.n) + action_i
+            #     prev_actions_ohe[ohe_action_index] = 1.
 
         # combine all
-        x = np.concatenate((obs_first, agent_ohe, prev_actions_ohe))
+        x = np.concatenate((np_obs, agent_ohe, prev_actions_ohe))
 
         return x

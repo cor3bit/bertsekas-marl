@@ -5,13 +5,13 @@ from tqdm import tqdm
 import numpy as np
 import gym
 import ma_gym  # register new envs on import
-from ma_gym.wrappers import Monitor
+from ma_gym.wrappers.monitor import Monitor
 
 from src.constants import SpiderAndFlyEnv, AgentType
 from src.agent_std_rollout import StdRolloutMultiAgent
 
-N_EPISODES = 5
-N_SIMS_PER_MC = 10
+N_EPISODES = 1
+N_SIMS_PER_MC = 50
 
 if __name__ == '__main__':
     np.random.seed(42)
@@ -19,7 +19,7 @@ if __name__ == '__main__':
     # create Spider-and-Fly game
     env = gym.make(SpiderAndFlyEnv)
     env.seed(42)
-    # env = Monitor(env, directory='../artifacts/recordings', force=True,)
+    # env = Monitor(env, directory='../artifacts/recordings', force=True, )
 
     for i_episode in tqdm(range(N_EPISODES)):
         # init env
@@ -28,9 +28,9 @@ if __name__ == '__main__':
         env.render()
 
         # init env variables
-        m_agents = env.n_agents
-        p_preys = env.n_preys
-        grid_shape = env._grid_shape
+        m_agents = env.env.n_agents
+        p_preys = env.env.n_preys
+        grid_shape = env.env._grid_shape
 
         # init agents
         std_rollout_multiagent = StdRolloutMultiAgent(
@@ -50,11 +50,11 @@ if __name__ == '__main__':
 
             total_reward += np.sum(reward_n)
 
-            time.sleep(0.5)
+            # time.sleep(0.5)
             env.render()
 
         print(f'Episode {i_episode}: Avg Reward is {total_reward / env.n_agents}')
 
-    time.sleep(2.)
+    # time.sleep(2.)
 
     env.close()

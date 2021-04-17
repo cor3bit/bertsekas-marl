@@ -18,10 +18,11 @@ SEED = 42
 M_AGENTS = 4
 P_PREY = 2
 
-N_SAMPLES = 100_000
-BATCH_SIZE = 512
-EPOCHS = 100
+N_SAMPLES = 200_000
+BATCH_SIZE = 1024
+EPOCHS = 500
 FROM_SCRATCH = False
+N_SIMS_MC = 50
 
 
 def generate_samples(n_samples, seed):
@@ -46,7 +47,8 @@ def generate_samples(n_samples, seed):
             grid_shape = env._grid_shape
             action_space = env.action_space[0]
 
-            agents = [SequentialRolloutAgent(i, m_agents, p_preys, grid_shape, env.action_space[i])
+            agents = [SequentialRolloutAgent(i, m_agents, p_preys, grid_shape,
+                                             env.action_space[i], n_sim_per_step=N_SIMS_MC)
                       for i in range(m_agents)]
 
             # init stopping condition
@@ -75,9 +77,13 @@ def generate_samples(n_samples, seed):
                         # current agent's actions is the output of QNet, not input
                         if agent_i == i:
                             continue
-
-                        ohe_action_index = int(agent_i * action_space.n) + action_i
-                        prev_actions_ohe[ohe_action_index] = 1.
+                        elif agent_i in prev_actions:
+                            ohe_action_index = int(agent_i * action_space.n) + prev_actions[agent_i]
+                            prev_actions_ohe[ohe_action_index] = 1.
+                        # TODO
+                        # else:
+                        #     ohe_action_index = int(agent_i * action_space.n) + action_i
+                        #     prev_actions_ohe[ohe_action_index] = 1.
 
                     x = np.concatenate((obs_first, agent_ohe, prev_actions_ohe))
 
@@ -162,7 +168,9 @@ def train_qnetwork(samples):
 
 if __name__ == '__main__':
     # fix seed
-    # TODO fix seed    # TODO Switched off for re-training    # torch.manual_seed(SEED)
+    # TODO fix seed
+    # np.random.seed(SEED)
+    # torch.manual_seed(SEED)
 
     # collect samples
     t1 = perf_counter()

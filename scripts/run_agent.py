@@ -11,10 +11,10 @@ from src.constants import SpiderAndFlyEnv, AgentType
 from src.agent_random import RandomAgent
 from src.agent_rule_based import RuleBasedAgent
 from src.agent_seq_rollout import SequentialRolloutAgent
-from src.agent_approx_rollout import RolloutAgent
+from src.agent_approx_rollout import ApproxRolloutAgent
 
-N_EPISODES = 5
-AGENT_TYPE = AgentType.SEQ_MA_ROLLOUT
+N_EPISODES = 3
+AGENT_TYPE = AgentType.APRX_ROLLOUT
 
 
 def create_agents(env: gym.Env, agent_type: str) -> List:
@@ -32,7 +32,7 @@ def create_agents(env: gym.Env, agent_type: str) -> List:
         agents = [SequentialRolloutAgent(i, m_agents, p_preys, grid_shape, env.action_space[i])
                   for i in range(m_agents)]
     elif agent_type == AgentType.APRX_ROLLOUT:
-        agents = [RolloutAgent(i, m_agents, p_preys, grid_shape, env.action_space[i])
+        agents = [ApproxRolloutAgent(i, m_agents, p_preys, grid_shape, env.action_space[i])
                   for i in range(m_agents)]
     else:
         raise ValueError(f'Unrecognized agent type: {agent_type}.')

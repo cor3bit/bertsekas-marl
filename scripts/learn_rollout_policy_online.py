@@ -13,7 +13,7 @@ from src.constants import SpiderAndFlyEnv, RolloutModelPath_10x10_4v2
 from src.qnetwork import QNetwork
 from src.qnetwork_coordinated import QNetworkCoordinated
 from src.agent_rule_based import RuleBasedAgent
-from src.agent_approx_rollout import RolloutAgent
+from src.agent_approx_rollout import ApproxRolloutAgent
 
 N_EPISODES = 20
 N_SIMS_PER_STEP = 10
