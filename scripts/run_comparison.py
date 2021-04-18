@@ -7,13 +7,13 @@ import ma_gym  # register new envs on import
 from tqdm import tqdm
 
 from src.constants import SpiderAndFlyEnv, AgentType
-from src.agent_approx_rollout import ApproxRolloutAgent
+from src.agent_qnet_based import QnetBasedAgent
 from src.agent_rule_based import RuleBasedAgent
 from src.agent_seq_rollout import SequentialRolloutAgent
 from src.agent_std_rollout import StdRolloutMultiAgent
 
 SEED = 42
-N_EPISODES = 10000
+N_EPISODES = 1_00
 N_SIMS_MC = 50
 WITH_STD_ROLLOUT = False
 
@@ -31,8 +31,8 @@ def create_agents(env: gym.Env, agent_type: str) -> List:
         agents = [SequentialRolloutAgent(i, m_agents, p_preys, grid_shape, env.action_space[i],
                                          n_sim_per_step=N_SIMS_MC)
                   for i in range(m_agents)]
-    elif agent_type == AgentType.APRX_ROLLOUT:
-        agents = [ApproxRolloutAgent(i, m_agents, p_preys, grid_shape, env.action_space[i])
+    elif agent_type == AgentType.QNET_BASED:
+        agents = [QnetBasedAgent(i, m_agents, p_preys, grid_shape, env.action_space[i])
                   for i in range(m_agents)]
     else:
         raise ValueError(f'Unrecognized agent type: {agent_type}.')
@@ -125,7 +125,7 @@ if __name__ == '__main__':
     np.random.seed(SEED)
 
     # AgentType.RULE_BASED, AgentType.SEQ_MA_ROLLOUT, AgentType.APRX_ROLLOUT
-    for agent_type in [AgentType.RULE_BASED, AgentType.APRX_ROLLOUT]:
+    for agent_type in [AgentType.RULE_BASED, AgentType.QNET_BASED]:
         print(f'Running {agent_type} Agent.')
         avg_reward = run_agent(agent_type)
         print(f'Avg reward for {agent_type} Agent on {N_EPISODES} episodes: {avg_reward}.')

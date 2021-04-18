@@ -11,7 +11,7 @@ from src.constants import SpiderAndFlyEnv, AgentType
 from src.agent_random import RandomAgent
 from src.agent_rule_based import RuleBasedAgent
 from src.agent_seq_rollout import SequentialRolloutAgent
-from src.agent_qnet_based import ApproxRolloutAgent
+from src.agent_qnet_based import QnetBasedAgent
 
 N_EPISODES = 3
 AGENT_TYPE = AgentType.QNET_BASED
@@ -32,7 +32,7 @@ def create_agents(env: gym.Env, agent_type: str) -> List:
         agents = [SequentialRolloutAgent(i, m_agents, p_preys, grid_shape, env.action_space[i])
                   for i in range(m_agents)]
     elif agent_type == AgentType.QNET_BASED:
-        agents = [ApproxRolloutAgent(i, m_agents, p_preys, grid_shape, env.action_space[i])
+        agents = [QnetBasedAgent(i, m_agents, p_preys, grid_shape, env.action_space[i])
                   for i in range(m_agents)]
     else:
         raise ValueError(f'Unrecognized agent type: {agent_type}.')

@@ -13,16 +13,14 @@ from src.constants import SpiderAndFlyEnv, BaselineModelPath_10x10_4v2
 from src.qnetwork import QNetwork
 from src.agent_rule_based import RuleBasedAgent
 
+SEED = 42
+
 M_AGENTS = 4
 P_PREY = 2
 
 N_SAMPLES = 2_000_000
-
 BATCH_SIZE = 512
-
 EPOCHS = 20
-
-SEED = 42
 
 
 def generate_samples(n_samples, seed):
