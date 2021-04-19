@@ -26,14 +26,18 @@ class RuleBasedAgent(Agent):
         self._model = gym.make(SpiderAndFlyEnv)
         assert self._model._grid_shape == grid_shape
 
-    def act(self, obs, **kwargs):
-        curr_pos = self._get_agent_pos(obs)
-        alive_prey_coords = self._get_alive_prey_coords(obs)
-        action_distances = self._get_action_distances(curr_pos, alive_prey_coords)
+    def act(
+            self,
+            obs: List[float],
+            **kwargs,
+    ) -> int:
+        best_action, action_distances = self.act_with_info(obs)
+        return best_action
 
-        return action_distances.argmin()
-
-    def act_with_info(self, obs, **kwargs):
+    def act_with_info(
+            self,
+            obs,
+    ) -> Tuple[int, np.ndarray]:
         curr_pos = self._get_agent_pos(obs)
         alive_prey_coords = self._get_alive_prey_coords(obs)
         action_distances = self._get_action_distances(curr_pos, alive_prey_coords)
@@ -42,8 +46,8 @@ class RuleBasedAgent(Agent):
 
     def _get_action_distances(
             self,
-            curr_pos,
-            alive_prey_coords,
+            curr_pos: Tuple[int, int],
+            alive_prey_coords: List[Tuple[float, float]],
     ):
         n_actions = self._action_space.n
 
@@ -73,7 +77,7 @@ class RuleBasedAgent(Agent):
 
     def _get_agent_pos(
             self,
-            obs: np.array,
+            obs: np.ndarray,
     ) -> Tuple[int, int]:
         start_ind = int(self.id * 2)
         row_pos_scaled, col_pos_scaled = obs[start_ind], obs[start_ind + 1]

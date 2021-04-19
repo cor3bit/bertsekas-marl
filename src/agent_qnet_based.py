@@ -1,13 +1,12 @@
-from typing import Tuple
+from typing import Tuple, List, Dict
 
 import numpy as np
 import torch
 import gym
 
-from src.qnetwork_coordinated import QNetworkCoordinated
-from src.constants import RolloutModelPath_10x10_4v2, RepeatedRolloutModelPath_10x10_4v2
 from src.agent import Agent
-from src.agent_rule_based import RuleBasedAgent
+from src.qnetwork_coordinated import QNetworkCoordinated
+from src.constants import QnetType, RolloutModelPath_10x10_4v2, RepeatedRolloutModelPath_10x10_4v2
 
 
 class QnetBasedAgent(Agent):
@@ -18,7 +17,7 @@ class QnetBasedAgent(Agent):
             p_preys: int,
             grid_shape: Tuple[int, int],
             action_space: gym.spaces.Discrete,
-            qnet_name: str = None,
+            qnet_type: str,
     ):
         self.id = agent_id
         self._m_agents = m_agents
@@ -27,13 +26,16 @@ class QnetBasedAgent(Agent):
         self._action_space = action_space
 
         # load neural net on init
+        qnet_name = RolloutModelPath_10x10_4v2 if qnet_type == QnetType.BASELINE else RepeatedRolloutModelPath_10x10_4v2
         self._nn = self._load_net(qnet_name)
 
-        # for heuristic
-        # self._rb_agents = [RuleBasedAgent(i, m_agents, p_preys,
-        #                                   grid_shape, action_space) for i in range(m_agents)]
-
-    def act(self, obs, prev_actions=None, epsilon=0.0, **kwargs):
+    def act(
+            self,
+            obs: List[float],
+            prev_actions: Dict[int, int] = None,
+            epsilon: float = 0.0,
+            **kwargs,
+    ) -> int:
         # 1) form 5 samples for each action
         # 2) call q-network
         # 3) arg max action OR random (epsilon greedy)
@@ -49,16 +51,23 @@ class QnetBasedAgent(Agent):
             qs = self._nn(v)
             return np.argmax(qs.data.numpy())
 
-    def _load_net(self, qnet_name=None):
+    def _load_net(
+            self,
+            qnet_name: str = None
+    ) -> QNetworkCoordinated:
         net = QNetworkCoordinated(self._m_agents, self._p_preys, self._action_space.n)
-        net.load_state_dict(torch.load(RepeatedRolloutModelPath_10x10_4v2 if qnet_name is None else qnet_name))
+        net.load_state_dict(torch.load(qnet_name))
 
         # set dropout and batch normalization layers to evaluation mode
         net.eval()
 
         return net
 
-    def _convert_to_x(self, obs, prev_actions):
+    def _convert_to_x(
+            self,
+            obs: List[float],
+            prev_actions: Dict[int, int] = None,
+    ) -> np.ndarray:
         # state
         np_obs = np.array(obs, dtype=np.float32).flatten()
 
@@ -68,19 +77,9 @@ class QnetBasedAgent(Agent):
 
         # prev actions
         prev_actions_ohe = np.zeros(shape=(self._m_agents * self._action_space.n,), dtype=np.float32)
-        for i in range(self._m_agents):
-            if i == self.id:
-                continue
-            elif i in prev_actions:
-                action_i = prev_actions[i]
-                ohe_action_index = int(i * self._action_space.n) + action_i
-                prev_actions_ohe[ohe_action_index] = 1.
-            # else:
-            #     # TODO from RB agent OR ApproxAgent
-            #     rb_agent_i = self._rb_agents[i]
-            #     action_i = rb_agent_i.act(np_obs)
-            #     ohe_action_index = int(i * self._action_space.n) + action_i
-            #     prev_actions_ohe[ohe_action_index] = 1.
+        for agent_i, action_i in prev_actions.items():
+            ohe_action_index = int(agent_i * self._action_space.n) + action_i
+            prev_actions_ohe[ohe_action_index] = 1.
 
         # combine all
         x = np.concatenate((np_obs, agent_ohe, prev_actions_ohe))

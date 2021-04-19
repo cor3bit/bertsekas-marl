@@ -7,11 +7,12 @@ import numpy as np
 import gym
 import ma_gym
 
+from agent import MultiAgent
 from src.constants import SpiderAndFlyEnv
 from src.agent_rule_based import RuleBasedAgent
 
 
-class StdRolloutMultiAgent:
+class StdRolloutMultiAgent(MultiAgent):
     def __init__(
             self,
             m_agents: int,
@@ -30,7 +31,8 @@ class StdRolloutMultiAgent:
 
     def act_n(
             self,
-            obs_n: List,
+            obs_n: List[List[float]],
+            **kwargs,
     ) -> Tuple[int, int, int, int]:
         n_actions = self._action_space.n
         available_moves = list(range(n_actions))
@@ -58,7 +60,7 @@ class StdRolloutMultiAgent:
 
     @staticmethod
     def _simulate(
-            initial_obs: Iterable[float],
+            initial_obs: List[float],
             initial_step: Tuple,
             m_agents: int,
             p_preys: int,

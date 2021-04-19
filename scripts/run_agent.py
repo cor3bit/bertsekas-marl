@@ -60,7 +60,7 @@ if __name__ == '__main__':
         # init stopping condition
         done_n = [False] * env.n_agents
 
-        total_reward = .0
+        total_reward = 0.
 
         # run an episode until all prey is caught
         while not all(done_n):

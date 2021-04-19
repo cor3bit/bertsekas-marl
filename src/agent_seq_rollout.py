@@ -40,42 +40,50 @@ class SequentialRolloutAgent(Agent):
             prev_actions: Dict[int, int] = None,
             **kwargs,
     ) -> int:
-        assert prev_actions is not None
+        # assert prev_actions is not None
+        #
+        # n_actions = self._action_space.n
+        #
+        # # parallel vars
+        # sim_results = []
+        #
+        # with ProcessPoolExecutor(max_workers=self._n_workers) as pool:
+        #     futures = []
+        #
+        #     for action_id in range(n_actions):
+        #         # 1st step - optimal actions from previous agents,
+        #         # simulated step from current agent,
+        #         # greedy (baseline) from undecided agents
+        #         first_step_prev_actions = dict(prev_actions)
+        #         act_n = np.empty((self._m_agents,), dtype=np.int8)
+        #         for i in range(self._m_agents):
+        #             if i in prev_actions:
+        #                 act_n[i] = prev_actions[i]
+        #             elif self.id == i:
+        #                 act_n[i] = action_id
+        #                 first_step_prev_actions[i] = action_id
+        #             else:
+        #                 rb_agent = self._agent_cls(i, self._m_agents, self._p_preys,
+        #                                            self._grid_shape, self._action_space)
+        #                 action_taken = rb_agent.act(obs, prev_actions=first_step_prev_actions)
+        #                 act_n[i] = action_taken
+        #                 first_step_prev_actions[i] = action_taken
+        #
+        #         # run N simulations
+        #         futures.append(pool.submit(
+        #             self._simulate, action_id, obs, act_n, self._m_agents, self._p_preys,
+        #             self._grid_shape, self._action_space, self._n_sim_per_step, self._agent_cls,
+        #         ))
+        #
+        #     for f in as_completed(futures):
+        #         res = f.result()
+        #         sim_results.append(res)
+        #
+        # best_action = max(sim_results, key=itemgetter(1))[0]
+        #
+        # return best_action
 
-        n_actions = self._action_space.n
-
-        # parallel vars
-        sim_results = []
-
-        with ProcessPoolExecutor(max_workers=self._n_workers) as pool:
-            futures = []
-
-            for action_id in range(n_actions):
-                # 1st step - optimal actions from previous agents,
-                # simulated step from current agent,
-                # greedy (baseline) from undecided agents
-                act_n = np.empty((self._m_agents,), dtype=np.int8)
-                for i in range(self._m_agents):
-                    if i in prev_actions:
-                        act_n[i] = prev_actions[i]
-                    elif self.id == i:
-                        act_n[i] = action_id
-                    else:
-                        rb_agent = self._agent_cls(i, self._m_agents, self._p_preys,
-                                                   self._grid_shape, self._action_space)
-                        act_n[i] = rb_agent.act(obs)
-
-                # run N simulations
-                futures.append(pool.submit(
-                    self._simulate, action_id, obs, act_n, self._m_agents, self._p_preys,
-                    self._grid_shape, self._action_space, self._n_sim_per_step,
-                ))
-
-            for f in as_completed(futures):
-                res = f.result()
-                sim_results.append(res)
-
-        best_action = max(sim_results, key=itemgetter(1))[0]
+        best_action, sim_results, act_n = self.act_with_info(obs, prev_actions, **kwargs)
 
         return best_action
 
@@ -85,6 +93,8 @@ class SequentialRolloutAgent(Agent):
             prev_actions: Dict[int, int] = None,
             **kwargs,
     ) -> int:
+        assert prev_actions is not None
+
         n_actions = self._action_space.n
 
         # parallel vars
