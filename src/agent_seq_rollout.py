@@ -13,7 +13,7 @@ from src.agent_qnet_based import QnetBasedAgent
 from src.agent import Agent
 
 
-class SequentialRolloutAgent(Agent):
+class SeqRolloutAgent(Agent):
     def __init__(
             self,
             agent_id: int,
@@ -21,9 +21,10 @@ class SequentialRolloutAgent(Agent):
             p_preys: int,
             grid_shape: Tuple[int, int],
             action_space: gym.spaces.Discrete,
-            n_sim_per_step=10,
-            basis_agent_type=AgentType.RULE_BASED,
-            n_workers=5,
+            n_sim_per_step: int = 10,
+            basis_agent_type: str = AgentType.RULE_BASED,
+            qnet_type: str = None,
+            n_workers: int = 12,
     ):
         self.id = agent_id
         self._m_agents = m_agents
@@ -31,166 +32,115 @@ class SequentialRolloutAgent(Agent):
         self._grid_shape = grid_shape
         self._action_space = action_space
         self._n_sim_per_step = n_sim_per_step
-        self._agent_cls = RuleBasedAgent if basis_agent_type == AgentType.RULE_BASED else QnetBasedAgent
+        self._agents = self._create_agents(basis_agent_type, qnet_type)
         self._n_workers = n_workers
 
     def act(
             self,
-            obs: Iterable[float],
+            obs: List[float],
             prev_actions: Dict[int, int] = None,
             **kwargs,
     ) -> int:
-        # assert prev_actions is not None
-        #
-        # n_actions = self._action_space.n
-        #
-        # # parallel vars
-        # sim_results = []
-        #
-        # with ProcessPoolExecutor(max_workers=self._n_workers) as pool:
-        #     futures = []
-        #
-        #     for action_id in range(n_actions):
-        #         # 1st step - optimal actions from previous agents,
-        #         # simulated step from current agent,
-        #         # greedy (baseline) from undecided agents
-        #         first_step_prev_actions = dict(prev_actions)
-        #         act_n = np.empty((self._m_agents,), dtype=np.int8)
-        #         for i in range(self._m_agents):
-        #             if i in prev_actions:
-        #                 act_n[i] = prev_actions[i]
-        #             elif self.id == i:
-        #                 act_n[i] = action_id
-        #                 first_step_prev_actions[i] = action_id
-        #             else:
-        #                 rb_agent = self._agent_cls(i, self._m_agents, self._p_preys,
-        #                                            self._grid_shape, self._action_space)
-        #                 action_taken = rb_agent.act(obs, prev_actions=first_step_prev_actions)
-        #                 act_n[i] = action_taken
-        #                 first_step_prev_actions[i] = action_taken
-        #
-        #         # run N simulations
-        #         futures.append(pool.submit(
-        #             self._simulate, action_id, obs, act_n, self._m_agents, self._p_preys,
-        #             self._grid_shape, self._action_space, self._n_sim_per_step, self._agent_cls,
-        #         ))
-        #
-        #     for f in as_completed(futures):
-        #         res = f.result()
-        #         sim_results.append(res)
-        #
-        # best_action = max(sim_results, key=itemgetter(1))[0]
-        #
-        # return best_action
-
-        best_action, sim_results, act_n = self.act_with_info(obs, prev_actions, **kwargs)
-
+        best_action, action_q_values = self.act_with_info(obs, prev_actions)
         return best_action
 
     def act_with_info(
             self,
-            obs: Iterable[float],
+            obs: List[float],
             prev_actions: Dict[int, int] = None,
-            **kwargs,
-    ) -> int:
+    ) -> Tuple[int, np.ndarray]:
         assert prev_actions is not None
 
         n_actions = self._action_space.n
 
-        # parallel vars
+        # parallel calculations
         sim_results = []
+        with ProcessPoolExecutor(max_workers=self._n_workers) as pool:
+            futures = []
 
-        # with ProcessPoolExecutor(max_workers=self._n_workers) as pool:
-        #     futures = []
+            # calculate first step
+            for action_id in range(n_actions):
+                first_step_prev_actions = dict(prev_actions)
+                act_n = np.empty((self._m_agents,), dtype=np.int8)
+                for i in range(self._m_agents):
+                    if i in prev_actions:
+                        act_n[i] = prev_actions[i]
+                    elif self.id == i:
+                        act_n[i] = action_id
+                        first_step_prev_actions[i] = action_id
+                    else:
+                        underlying_agent = self._agents[i]
+                        assumed_action = underlying_agent.act(obs, prev_actions=first_step_prev_actions)
+                        act_n[i] = assumed_action
+                        first_step_prev_actions[i] = assumed_action
 
+                # submit simulation with config (simulated_action, simulation_id)
+                for simulation_id in range(self._n_sim_per_step):
+                    futures.append(pool.submit(
+                        self._simulate_episode_par, action_id, simulation_id, obs, act_n, self._agents,
+                    ))
+
+            for f in as_completed(futures):
+                res = f.result()
+                sim_results.append(res)
+
+        # analyze results of the simulation
+        np_results = np.array(sim_results, np.float32)
+        action_q_values = np.empty(shape=(n_actions,), dtype=np.float32)
         for action_id in range(n_actions):
-            # 1st step - optimal actions from previous agents,
-            # simulated step from current agent,
-            # greedy (baseline) from undecided agents
-            first_step_prev_actions = dict(prev_actions)
-            act_n = np.empty((self._m_agents,), dtype=np.int8)
-            for i in range(self._m_agents):
-                if i in prev_actions:
-                    act_n[i] = prev_actions[i]
-                elif self.id == i:
-                    act_n[i] = action_id
-                    first_step_prev_actions[i] = action_id
-                else:
-                    rb_agent = self._agent_cls(i, self._m_agents, self._p_preys,
-                                               self._grid_shape, self._action_space)
-                    assumed_action = rb_agent.act(obs, prev_actions=first_step_prev_actions)
-                    act_n[i] = assumed_action
-                    first_step_prev_actions[i] = assumed_action
+            np_results_action = np_results[np_results[:, 0] == action_id]
+            action_q_values[action_id] = np.mean(np_results_action[:, 2])
 
-            res = self._simulate(action_id, obs, act_n, self._m_agents, self._p_preys,
-                                 self._grid_shape, self._action_space, self._n_sim_per_step, self._agent_cls, )
-            sim_results.append(res)
+        best_action = np.argmax(action_q_values)
 
-            # run N simulations
-            # futures.append(pool.submit(
-            #     self._simulate, action_id, obs, act_n, self._m_agents, self._p_preys,
-            #     self._grid_shape, self._action_space, self._n_sim_per_step, self._agent_cls,
-            # ))
+        return best_action, action_q_values
 
-            # for f in as_completed(futures):
-            #     res = f.result()
-            #     sim_results.append(res)
+    def _create_agents(self, agent_type, qnet_type):
+        if agent_type == AgentType.RULE_BASED:
+            agents = [RuleBasedAgent(
+                i, self._m_agents, self._p_preys, self._grid_shape, self._action_space,
+            ) for i in range(self._m_agents)]
+        elif agent_type == AgentType.QNET_BASED:
+            agents = [QnetBasedAgent(
+                i, self._m_agents, self._p_preys, self._grid_shape, self._action_space, qnet_type=qnet_type,
+            ) for i in range(self._m_agents)]
+        else:
+            raise ValueError(f'Invalid agent type: {agent_type}.')
 
-        best_action = max(sim_results, key=itemgetter(1))[0]
-
-        # best_action, q_values_sim, actions_other_agents
-
-        return best_action, sim_results, act_n
+        return agents
 
     @staticmethod
-    def _simulate(
-            action_id,
-            initial_obs: Iterable[float],
-            initial_step: np.array,
-            m_agents,
-            p_preys,
-            grid_shape,
-            action_space,
-            n_sim_per_step,
-            agent_cls,
-    ) -> Tuple[int, float]:
-        avg_total_reward = .0
-
+    def _simulate_episode_par(
+            action_id: int,
+            simulation_id: int,
+            initial_obs: List[float],
+            initial_step: np.ndarray,
+            agents: List[Agent],
+    ):
         # create env
         env = gym.make(SpiderAndFlyEnv)
 
-        # create agents
-        agents = [agent_cls(i, m_agents,
-                            p_preys, grid_shape, action_space)
-                  for i in range(m_agents)]
+        # init env from observation
+        obs_n = env.reset_from(initial_obs)
 
-        # run N simulations
-        for _ in range(n_sim_per_step):
-            obs_n = env.reset_from(initial_obs)
+        # make prescribed first step
+        obs_n, reward_n, done_n, info = env.step(initial_step)
+        total_reward = np.sum(reward_n)
 
-            # 1 step
-            obs_n, reward_n, done_n, info = env.step(initial_step)
-            avg_total_reward += np.sum(reward_n)
+        # run simulation
+        while not all(done_n):
+            act_n = []
+            prev_actions = {}
+            for agent, obs in zip(agents, obs_n):
+                best_action = agent.act(obs, prev_actions=prev_actions)
+                act_n.append(best_action)
+                prev_actions[agent.id] = best_action
 
-            # run an episode until all prey is caught
-            while not all(done_n):
-
-                # all agents act based on the observation
-                act_n = []
-                prev_actions = {}
-                for agent, obs in zip(agents, obs_n):
-                    best_action = agent.act(obs, prev_actions=prev_actions)
-                    act_n.append(best_action)
-                    prev_actions[agent.id] = best_action
-
-                # update step
-                obs_n, reward_n, done_n, info = env.step(act_n)
-
-                avg_total_reward += np.sum(reward_n)
+            obs_n, reward_n, done_n, info = env.step(act_n)
+            total_reward += np.sum(reward_n)
 
         env.close()
 
-        avg_total_reward /= m_agents
-        avg_total_reward /= n_sim_per_step
+        total_reward /= len(agents)
 
-        return action_id, avg_total_reward
+        return action_id, simulation_id, total_reward

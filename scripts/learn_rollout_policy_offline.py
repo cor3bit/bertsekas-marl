@@ -9,9 +9,10 @@ import torch.nn as nn
 import torch.optim as optim
 import ma_gym  # register new envs on import
 
-from src.constants import SpiderAndFlyEnv, RolloutModelPath_10x10_4v2, AgentType, RepeatedRolloutModelPath_10x10_4v2
+from src.constants import SpiderAndFlyEnv, RolloutModelPath_10x10_4v2, RepeatedRolloutModelPath_10x10_4v2, AgentType, \
+    QnetType
 from src.qnetwork_coordinated import QNetworkCoordinated
-from src.agent_seq_rollout import SequentialRolloutAgent
+from src.agent_seq_rollout import SeqRolloutAgent
 
 SEED = 42
 
@@ -22,10 +23,11 @@ N_SAMPLES = 100
 BATCH_SIZE = 1024
 EPOCHS = 500
 N_SIMS_MC = 50
-FROM_SCRATCH = False
+FROM_SCRATCH = True
 INPUT_QNET_NAME = RepeatedRolloutModelPath_10x10_4v2
 OUTPUT_QNET_NAME = RepeatedRolloutModelPath_10x10_4v2
 BASIS_POLICY_AGENT = AgentType.QNET_BASED
+QNET_TYPE = QnetType.BASELINE
 
 
 def generate_samples(n_samples, seed):
@@ -50,27 +52,21 @@ def generate_samples(n_samples, seed):
             grid_shape = env._grid_shape
             action_space = env.action_space[0]
 
-            agents = [SequentialRolloutAgent(
+            agents = [SeqRolloutAgent(
                 i, m_agents, p_preys, grid_shape, env.action_space[i],
                 n_sim_per_step=N_SIMS_MC,
                 basis_agent_type=BASIS_POLICY_AGENT,
-            )
-                for i in range(m_agents)]
+                qnet_type=QNET_TYPE,
+            ) for i in range(m_agents)]
 
             # init stopping condition
             done_n = [False] * m_agents
 
-            # run 100 episodes for a random agent
             while not all(done_n):
-                # for each agent calculates Manhattan Distance to each prey for each
-
-                # transform into samples
-                obs_first = np.array(obs_n[0], dtype=np.float32).flatten()  # same for all agent
-
                 prev_actions = {}
                 act_n = []
                 for i, (agent, obs) in enumerate(zip(agents, obs_n)):
-                    best_action, sim_results, actions_other_agents = agent.act_with_info(
+                    best_action, action_q_values = agent.act_with_info(
                         obs, prev_actions=prev_actions)
 
                     # create an (x,y) sample for QNet
@@ -78,26 +74,14 @@ def generate_samples(n_samples, seed):
                     agent_ohe[i] = 1.
 
                     prev_actions_ohe = np.zeros(shape=(m_agents * action_space.n,), dtype=np.float32)
+                    for agent_i, action_i in prev_actions.items():
+                        ohe_action_index = int(agent_i * action_space.n) + prev_actions[agent_i]
+                        prev_actions_ohe[ohe_action_index] = 1.
 
-                    for agent_i, action_i in enumerate(actions_other_agents):
-                        # current agent's actions is the output of QNet, not input
-                        if agent_i == i:
-                            continue
-                        elif agent_i in prev_actions:
-                            ohe_action_index = int(agent_i * action_space.n) + prev_actions[agent_i]
-                            prev_actions_ohe[ohe_action_index] = 1.
-                        # TODO
-                        # else:
-                        #     ohe_action_index = int(agent_i * action_space.n) + action_i
-                        #     prev_actions_ohe[ohe_action_index] = 1.
-
+                    obs_first = np.array(obs_n[0], dtype=np.float32).flatten()  # same for all agent
                     x = np.concatenate((obs_first, agent_ohe, prev_actions_ohe))
 
-                    np_sim_results = np.array(sim_results, dtype=np.float32)
-                    np_sim_results_sorted = np_sim_results[np.argsort(np_sim_results[:, 0])]
-                    y = np_sim_results_sorted[:, 1]
-
-                    samples.append((x, y))
+                    samples.append((x, action_q_values))
                     pbar.update(1)
 
                     # best action taken for the agent i

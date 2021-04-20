@@ -3,6 +3,7 @@ from typing import List, Tuple
 
 
 class Agent(ABC):
+    id = None
     _type = None
 
     @abstractmethod

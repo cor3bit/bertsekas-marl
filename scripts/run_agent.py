@@ -7,37 +7,48 @@ import gym
 import ma_gym  # register new envs on import
 from ma_gym.wrappers import Monitor
 
-from src.constants import SpiderAndFlyEnv, AgentType
+from src.constants import SpiderAndFlyEnv, AgentType, QnetType
+from src.agent import Agent
 from src.agent_random import RandomAgent
 from src.agent_rule_based import RuleBasedAgent
-from src.agent_seq_rollout import SequentialRolloutAgent
+from src.agent_seq_rollout import SeqRolloutAgent
 from src.agent_qnet_based import QnetBasedAgent
 
 N_EPISODES = 3
 AGENT_TYPE = AgentType.QNET_BASED
+QNET_TYPE = QnetType.BASELINE
+BASIS_AGENT_TYPE = AgentType.RULE_BASED
+N_SIMS = 10
 
 
-def create_agents(env: gym.Env, agent_type: str) -> List:
+def create_agents(
+        env: gym.Env,
+        agent_type: str,
+) -> List[Agent]:
     # init env variables
     m_agents = env.n_agents
     p_preys = env.n_preys
     grid_shape = env._grid_shape
 
     if agent_type == AgentType.RANDOM:
-        agents = [RandomAgent(env.action_space[i]) for i in range(m_agents)]
+        return [RandomAgent(
+            env.action_space[agent_i],
+        ) for agent_i in range(m_agents)]
     elif agent_type == AgentType.RULE_BASED:
-        agents = [RuleBasedAgent(i, m_agents, p_preys, grid_shape, env.action_space[i])
-                  for i in range(m_agents)]
-    elif agent_type == AgentType.SEQ_MA_ROLLOUT:
-        agents = [SequentialRolloutAgent(i, m_agents, p_preys, grid_shape, env.action_space[i])
-                  for i in range(m_agents)]
+        return [RuleBasedAgent(
+            agent_i, m_agents, p_preys, grid_shape, env.action_space[agent_i],
+        ) for agent_i in range(m_agents)]
     elif agent_type == AgentType.QNET_BASED:
-        agents = [QnetBasedAgent(i, m_agents, p_preys, grid_shape, env.action_space[i])
-                  for i in range(m_agents)]
+        return [QnetBasedAgent(
+            agent_i, m_agents, p_preys, grid_shape, env.action_space[agent_i], QNET_TYPE,
+        ) for agent_i in range(m_agents)]
+    elif agent_type == AgentType.SEQ_MA_ROLLOUT:
+        return [SeqRolloutAgent(
+            agent_i, m_agents, p_preys, grid_shape, env.action_space[i],
+            n_sim_per_step=N_SIMS, basis_agent_type=BASIS_AGENT_TYPE, qnet_type=QNET_TYPE,
+        ) for agent_i in range(m_agents)]
     else:
         raise ValueError(f'Unrecognized agent type: {agent_type}.')
-
-    return agents
 
 
 if __name__ == '__main__':

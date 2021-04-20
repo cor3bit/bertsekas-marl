@@ -6,17 +6,18 @@ import gym
 import ma_gym  # register new envs on import
 from tqdm import tqdm
 
-from src.constants import SpiderAndFlyEnv, AgentType
+from src.constants import SpiderAndFlyEnv, AgentType, QnetType
 from src.agent_qnet_based import QnetBasedAgent
 from src.agent_rule_based import RuleBasedAgent
-from src.agent_seq_rollout import SequentialRolloutAgent
+from src.agent_seq_rollout import SeqRolloutAgent
 from src.agent_std_rollout import StdRolloutMultiAgent
 
 SEED = 42
-N_EPISODES = 1_000
+N_EPISODES = 1_0
 N_SIMS_MC = 50
 WITH_STD_ROLLOUT = False
 BASIS_AGENT_TYPE = AgentType.QNET_BASED
+QNET_TYPE = QnetType.BASELINE
 
 
 def create_agents(env: gym.Env, agent_type: str) -> List:
@@ -26,17 +27,20 @@ def create_agents(env: gym.Env, agent_type: str) -> List:
     grid_shape = env._grid_shape
 
     if agent_type == AgentType.RULE_BASED:
-        agents = [RuleBasedAgent(i, m_agents, p_preys, grid_shape, env.action_space[i])
-                  for i in range(m_agents)]
-    elif agent_type == AgentType.SEQ_MA_ROLLOUT:
-        agents = [SequentialRolloutAgent(i, m_agents, p_preys, grid_shape, env.action_space[i],
-                                         n_sim_per_step=N_SIMS_MC,
-                                         basis_agent_type=BASIS_AGENT_TYPE,
-                                         )
-                  for i in range(m_agents)]
+        agents = [RuleBasedAgent(
+            i, m_agents, p_preys, grid_shape, env.action_space[i],
+        ) for i in range(m_agents)]
     elif agent_type == AgentType.QNET_BASED:
-        agents = [QnetBasedAgent(i, m_agents, p_preys, grid_shape, env.action_space[i])
-                  for i in range(m_agents)]
+        agents = [QnetBasedAgent(
+            i, m_agents, p_preys, grid_shape, env.action_space[i], qnet_type=QNET_TYPE,
+        ) for i in range(m_agents)]
+    elif agent_type == AgentType.SEQ_MA_ROLLOUT:
+        agents = [SeqRolloutAgent(
+            i, m_agents, p_preys, grid_shape, env.action_space[i],
+            n_sim_per_step=N_SIMS_MC,
+            basis_agent_type=BASIS_AGENT_TYPE,
+            qnet_type=QNET_TYPE,
+        ) for i in range(m_agents)]
     else:
         raise ValueError(f'Unrecognized agent type: {agent_type}.')
 

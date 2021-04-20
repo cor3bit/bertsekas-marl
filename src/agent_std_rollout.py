@@ -7,7 +7,7 @@ import numpy as np
 import gym
 import ma_gym
 
-from agent import MultiAgent
+from src.agent import MultiAgent
 from src.constants import SpiderAndFlyEnv
 from src.agent_rule_based import RuleBasedAgent
 
