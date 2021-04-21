@@ -1,6 +1,4 @@
-from typing import List, Dict, Iterable, Tuple
-from itertools import product
-from operator import itemgetter
+from typing import List, Dict, Tuple
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import numpy as np
@@ -32,8 +30,9 @@ class SeqRolloutAgent(Agent):
         self._grid_shape = grid_shape
         self._action_space = action_space
         self._n_sim_per_step = n_sim_per_step
-        self._agents = self._create_agents(basis_agent_type, qnet_type)
         self._n_workers = n_workers
+        self._basis_agent_type = basis_agent_type
+        self._qnet_type = qnet_type
 
     def act(
             self,
@@ -58,39 +57,32 @@ class SeqRolloutAgent(Agent):
         with ProcessPoolExecutor(max_workers=self._n_workers) as pool:
             futures = []
 
-            # calculate first step
             for action_id in range(n_actions):
-                first_step_prev_actions = dict(prev_actions)
-                act_n = np.empty((self._m_agents,), dtype=np.int8)
-                for i in range(self._m_agents):
-                    if i in prev_actions:
-                        act_n[i] = prev_actions[i]
-                    elif self.id == i:
-                        act_n[i] = action_id
-                        first_step_prev_actions[i] = action_id
-                    else:
-                        underlying_agent = self._agents[i]
-                        assumed_action = underlying_agent.act(obs, prev_actions=first_step_prev_actions)
-                        act_n[i] = assumed_action
-                        first_step_prev_actions[i] = assumed_action
+                # submit simulation
+                futures.append(pool.submit(
+                    self._simulate_action_par,
 
-                # submit simulation with config (simulated_action, simulation_id)
-                for simulation_id in range(self._n_sim_per_step):
-                    futures.append(pool.submit(
-                        self._simulate_episode_par, action_id, simulation_id, obs, act_n, self._agents,
-                    ))
+                    self.id,
+                    action_id,
+                    self._n_sim_per_step,
+                    obs,
+                    prev_actions,
+                    self._m_agents,
+                    self._p_preys,
+                    self._grid_shape,
+                    self._action_space,
+                    self._basis_agent_type,
+                    self._qnet_type,
+                ))
 
             for f in as_completed(futures):
                 res = f.result()
                 sim_results.append(res)
 
         # analyze results of the simulation
-        np_results = np.array(sim_results, np.float32)
-        action_q_values = np.empty(shape=(n_actions,), dtype=np.float32)
-        for action_id in range(n_actions):
-            np_results_action = np_results[np_results[:, 0] == action_id]
-            action_q_values[action_id] = np.mean(np_results_action[:, 2])
-
+        np_sim_results = np.array(sim_results, dtype=np.float32)
+        np_sim_results_sorted = np_sim_results[np.argsort(np_sim_results[:, 0])]
+        action_q_values = np_sim_results_sorted[:, 1]
         best_action = np.argmax(action_q_values)
 
         return best_action, action_q_values
@@ -110,37 +102,82 @@ class SeqRolloutAgent(Agent):
         return agents
 
     @staticmethod
-    def _simulate_episode_par(
+    def _simulate_action_par(
+            agent_id: int,
             action_id: int,
-            simulation_id: int,
-            initial_obs: List[float],
-            initial_step: np.ndarray,
-            agents: List[Agent],
+            n_sims: int,
+            obs: List[float],
+            prev_actions: Dict[int, int],
+            m_agents,
+            p_preys,
+            grid_shape,
+            action_space,
+            agent_type,
+            qnet_type,
     ):
+        # Memory and CPU load
+        # create m agents (load QNet) from disk
+        # create env
+        # run N simulations
+
         # create env
         env = gym.make(SpiderAndFlyEnv)
 
-        # init env from observation
-        obs_n = env.reset_from(initial_obs)
+        # create QNet/RB agents
+        agents = None
+        if agent_type == AgentType.RULE_BASED:
+            agents = [RuleBasedAgent(
+                i, m_agents, p_preys, grid_shape, action_space,
+            ) for i in range(m_agents)]
+        elif agent_type == AgentType.QNET_BASED:
+            agents = [QnetBasedAgent(
+                i, m_agents, p_preys, grid_shape, action_space, qnet_type=qnet_type,
+            ) for i in range(m_agents)]
+        else:
+            raise ValueError(f'Invalid agent type: {agent_type}.')
+        assert agents is not None
 
-        # make prescribed first step
-        obs_n, reward_n, done_n, info = env.step(initial_step)
-        total_reward = np.sum(reward_n)
+        # roll first step
+        first_step_prev_actions = dict(prev_actions)
+        first_act_n = np.empty((m_agents,), dtype=np.int8)
+        for i in range(m_agents):
+            if i in prev_actions:
+                first_act_n[i] = prev_actions[i]
+            elif agent_id == i:
+                first_act_n[i] = action_id
+                first_step_prev_actions[i] = action_id
+            else:
+                underlying_agent = agents[i]
+                assumed_action = underlying_agent.act(obs, prev_actions=first_step_prev_actions)
+                first_act_n[i] = assumed_action
+                first_step_prev_actions[i] = assumed_action
 
-        # run simulation
-        while not all(done_n):
-            act_n = []
-            prev_actions = {}
-            for agent, obs in zip(agents, obs_n):
-                best_action = agent.act(obs, prev_actions=prev_actions)
-                act_n.append(best_action)
-                prev_actions[agent.id] = best_action
+        # run N simulations
+        avg_total_reward = 0.
 
-            obs_n, reward_n, done_n, info = env.step(act_n)
-            total_reward += np.sum(reward_n)
+        for j in range(n_sims):
+            # init env from observation
+            sim_obs_n = env.reset_from(obs)
+
+            # make prescribed first step
+            sim_obs_n, sim_reward_n, sim_done_n, sim_info = env.step(first_act_n)
+            avg_total_reward += np.sum(sim_reward_n)
+
+            # run simulation
+            while not all(sim_done_n):
+                sim_act_n = []
+                sim_prev_actions = {}
+                for agent, sim_obs in zip(agents, sim_obs_n):
+                    sim_best_action = agent.act(sim_obs, prev_actions=sim_prev_actions)
+                    sim_act_n.append(sim_best_action)
+                    sim_prev_actions[agent.id] = sim_best_action
+
+                sim_obs_n, sim_reward_n, sim_done_n, sim_info = env.step(sim_act_n)
+                avg_total_reward += np.sum(sim_reward_n)
 
         env.close()
 
-        total_reward /= len(agents)
+        avg_total_reward /= len(agents)
+        avg_total_reward /= n_sims
 
-        return action_id, simulation_id, total_reward
+        return action_id, avg_total_reward
