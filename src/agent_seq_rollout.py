@@ -31,8 +31,7 @@ class SeqRolloutAgent(Agent):
         self._action_space = action_space
         self._n_sim_per_step = n_sim_per_step
         self._n_workers = n_workers
-        self._basis_agent_type = basis_agent_type
-        self._qnet_type = qnet_type
+        self._agents = self._create_agents(basis_agent_type, qnet_type)
 
     def act(
             self,
@@ -68,11 +67,7 @@ class SeqRolloutAgent(Agent):
                     obs,
                     prev_actions,
                     self._m_agents,
-                    self._p_preys,
-                    self._grid_shape,
-                    self._action_space,
-                    self._basis_agent_type,
-                    self._qnet_type,
+                    self._agents,
                 ))
 
             for f in as_completed(futures):
@@ -87,7 +82,11 @@ class SeqRolloutAgent(Agent):
 
         return best_action, action_q_values
 
-    def _create_agents(self, agent_type, qnet_type):
+    def _create_agents(
+            self,
+            agent_type: str,
+            qnet_type: str,
+    ) -> List[Agent]:
         if agent_type == AgentType.RULE_BASED:
             agents = [RuleBasedAgent(
                 i, self._m_agents, self._p_preys, self._grid_shape, self._action_space,
@@ -108,34 +107,15 @@ class SeqRolloutAgent(Agent):
             n_sims: int,
             obs: List[float],
             prev_actions: Dict[int, int],
-            m_agents,
-            p_preys,
-            grid_shape,
-            action_space,
-            agent_type,
-            qnet_type,
-    ):
+            m_agents: int,
+            agents: List[Agent],
+    ) -> Tuple[int, float]:
         # Memory and CPU load
-        # create m agents (load QNet) from disk
         # create env
         # run N simulations
 
         # create env
         env = gym.make(SpiderAndFlyEnv)
-
-        # create QNet/RB agents
-        agents = None
-        if agent_type == AgentType.RULE_BASED:
-            agents = [RuleBasedAgent(
-                i, m_agents, p_preys, grid_shape, action_space,
-            ) for i in range(m_agents)]
-        elif agent_type == AgentType.QNET_BASED:
-            agents = [QnetBasedAgent(
-                i, m_agents, p_preys, grid_shape, action_space, qnet_type=qnet_type,
-            ) for i in range(m_agents)]
-        else:
-            raise ValueError(f'Invalid agent type: {agent_type}.')
-        assert agents is not None
 
         # roll first step
         first_step_prev_actions = dict(prev_actions)
