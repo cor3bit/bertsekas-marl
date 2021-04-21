@@ -19,7 +19,7 @@ SEED = 42
 M_AGENTS = 4
 P_PREY = 2
 
-N_SAMPLES = 100
+N_SAMPLES = 5_000
 BATCH_SIZE = 1024
 EPOCHS = 500
 N_SIMS_MC = 50
@@ -78,11 +78,14 @@ def generate_samples(n_samples, seed):
                         ohe_action_index = int(agent_i * action_space.n) + prev_actions[agent_i]
                         prev_actions_ohe[ohe_action_index] = 1.
 
-                    obs_first = np.array(obs_n[0], dtype=np.float32).flatten()  # same for all agent
+                    obs_first = np.array(obs, dtype=np.float32).flatten()  # same for all agent
                     x = np.concatenate((obs_first, agent_ohe, prev_actions_ohe))
 
                     samples.append((x, action_q_values))
                     pbar.update(1)
+                    if len(samples) == N_SAMPLES:
+                        env.close()
+                        return samples
 
                     # best action taken for the agent i
                     prev_actions[i] = best_action

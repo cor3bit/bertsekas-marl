@@ -48,7 +48,7 @@ class RuleBasedAgent(Agent):
             self,
             curr_pos: Tuple[int, int],
             alive_prey_coords: List[Tuple[float, float]],
-    ):
+    ) -> np.ndarray:
         n_actions = self._action_space.n
 
         action_distances = np.full((n_actions,), fill_value=np.inf, dtype=np.float32)

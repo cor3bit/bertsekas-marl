@@ -13,7 +13,7 @@ from src.agent_seq_rollout import SeqRolloutAgent
 from src.agent_std_rollout import StdRolloutMultiAgent
 
 SEED = 42
-N_EPISODES = 1_0
+N_EPISODES = 1_00
 N_SIMS_MC = 50
 WITH_STD_ROLLOUT = False
 BASIS_AGENT_TYPE = AgentType.QNET_BASED
@@ -27,15 +27,15 @@ def create_agents(env: gym.Env, agent_type: str) -> List:
     grid_shape = env._grid_shape
 
     if agent_type == AgentType.RULE_BASED:
-        agents = [RuleBasedAgent(
+        return [RuleBasedAgent(
             i, m_agents, p_preys, grid_shape, env.action_space[i],
         ) for i in range(m_agents)]
     elif agent_type == AgentType.QNET_BASED:
-        agents = [QnetBasedAgent(
+        return [QnetBasedAgent(
             i, m_agents, p_preys, grid_shape, env.action_space[i], qnet_type=QNET_TYPE,
         ) for i in range(m_agents)]
     elif agent_type == AgentType.SEQ_MA_ROLLOUT:
-        agents = [SeqRolloutAgent(
+        return [SeqRolloutAgent(
             i, m_agents, p_preys, grid_shape, env.action_space[i],
             n_sim_per_step=N_SIMS_MC,
             basis_agent_type=BASIS_AGENT_TYPE,
@@ -44,10 +44,8 @@ def create_agents(env: gym.Env, agent_type: str) -> List:
     else:
         raise ValueError(f'Unrecognized agent type: {agent_type}.')
 
-    return agents
 
-
-def run_agent(agent_type):
+def run_agent(agent_type: str):
     # create Spider-and-Fly game
     env = gym.make(SpiderAndFlyEnv)
     env.seed(SEED)
