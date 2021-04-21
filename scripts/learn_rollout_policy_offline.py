@@ -151,8 +151,8 @@ def train_qnetwork(samples):
         print(f'[{epoch}] {running_loss / n_batches:.3f}.')
 
         # save interim results
-        if epoch % 10 == 0:
-            torch.save(net.state_dict(), OUTPUT_QNET_NAME)
+        # if epoch % 10 == 0:
+        #     torch.save(net.state_dict(), OUTPUT_QNET_NAME)
 
     print('Finished Training.')
 
