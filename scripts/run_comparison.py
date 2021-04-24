@@ -13,11 +13,11 @@ from src.agent_seq_rollout import SeqRolloutAgent
 from src.agent_std_rollout import StdRolloutMultiAgent
 
 SEED = 42
-N_EPISODES = 1_00
+N_EPISODES = 1_000
 N_SIMS_MC = 50
 WITH_STD_ROLLOUT = False
 BASIS_AGENT_TYPE = AgentType.QNET_BASED
-QNET_TYPE = QnetType.BASELINE
+QNET_TYPE = QnetType.REPEATED
 
 
 def create_agents(env: gym.Env, agent_type: str) -> List:
@@ -130,13 +130,13 @@ if __name__ == '__main__':
     np.random.seed(SEED)
 
     # AgentType.RULE_BASED, AgentType.SEQ_MA_ROLLOUT, AgentType.QNET_BASED
-    for agent_type in [AgentType.SEQ_MA_ROLLOUT]:
+    for agent_type in [AgentType.QNET_BASED]:
         print(f'Running {agent_type} Agent.')
         avg_reward = run_agent(agent_type)
         print(f'Avg reward for {agent_type} Agent on {N_EPISODES} episodes: {avg_reward}.')
 
-    agent_type = AgentType.STD_MA_ROLLOUT
     if WITH_STD_ROLLOUT:
+        agent_type = AgentType.STD_MA_ROLLOUT
         print(f'Running {agent_type} Agent.')
         run_std_ma_agent()
         print(f'Avg reward for {agent_type} Agent on {N_EPISODES} episodes: {avg_reward}.')
