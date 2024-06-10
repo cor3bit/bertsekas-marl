@@ -22,9 +22,12 @@ $ pip install -r requirements.txt
 ```
 
 - Run the agent simulation from the `scripts` folder:
-
+May have to add the pwd to the path: eg- 
+export PYTHONPATH=$PYTHONPATH:/path/to/bertsekas-marl
+python3 scripts/run_agent.py
 ```
 $ python run_agent.py
+
 ```
 
 - Run agents' comparison from the `scripts` folder:
@@ -32,15 +35,6 @@ $ python run_agent.py
 ```
 $ python run_comparison.py
 ```
-
-### Results
-
-Baseline Policy        |  Standard Rollout     |Agent-by-agent Rollout     |
-:-------------------------:|:-------------------------:|:-------------------------:|
-![](artifacts/baseline.gif)  |  ![](artifacts/std_rollout.gif) |![](artifacts/agent_by_agent_rollout.gif) |
-
-Note: Baseline Policy means moving along the shortest path 
-to the closest surviving fly.
 
 
 ### References

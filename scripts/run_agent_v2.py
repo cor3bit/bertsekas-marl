@@ -21,7 +21,7 @@ from src.agent_rule_based import RuleBasedAgent
 from src.agent_seq_rollout import SeqRolloutAgent
 from src.agent_qnet_based import QnetBasedAgent
 
-N_EPISODES = 1
+N_EPISODES = 10
 AGENT_TYPE = AgentType.QNET_BASED
 QNET_TYPE = QnetType.BASELINE
 BASIS_AGENT_TYPE = AgentType.RULE_BASED
@@ -117,6 +117,6 @@ if __name__ == '__main__':
             imgs = env.render()
             visualize_image(imgs)
 
-            time.sleep(0.5)
+            time.sleep(0.1)
 
 
