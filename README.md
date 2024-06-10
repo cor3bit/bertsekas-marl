@@ -4,7 +4,8 @@
 Implementation of the Multiagent Rollout
 based on the 
 paper by Dimitri Bertsekas (2021).
-
+Original contribution from https://github.com/cor3bit
+Made necessary changes to be compatible with dependencies related to Apple M1 processors.
 
 ### Environment
 
