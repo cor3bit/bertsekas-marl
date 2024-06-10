@@ -4,44 +4,15 @@
 Implementation of the Multiagent Rollout
 based on the 
 paper by Dimitri Bertsekas (2021).
-Original contribution from https://github.com/cor3bit
+Original contribution from https://github.com/cor3bit.
 Made necessary changes to be compatible with dependencies related to Apple M1 processors.
 
 ### Environment
 
 Simulation environment follows the rules of the Spiders-and-Flies game as 
 specified in [1]. The environment is adapted from Anurag Koul's ma-gym [2] 
-modifying the PredatorPrey env.
+modifying the PredatorPrey env. Necessary changes have been made to export and view the observations when render dependencies are high.
 
-
-### Usage
-
-- Install the requirements with `pip`:
-
-```
-$ pip install -r requirements.txt
-```
-
-- Run the agent simulation from the `scripts` folder:
-
-```
-$ python run_agent.py
-```
-
-- Run agents' comparison from the `scripts` folder:
-
-```
-$ python run_comparison.py
-```
-
-### Results
-
-Baseline Policy        |  Standard Rollout     |Agent-by-agent Rollout     |
-:-------------------------:|:-------------------------:|:-------------------------:|
-![](artifacts/baseline.gif)  |  ![](artifacts/std_rollout.gif) |![](artifacts/agent_by_agent_rollout.gif) |
-
-Note: Baseline Policy means moving along the shortest path 
-to the closest surviving fly.
 
 
 ### References
@@ -52,4 +23,6 @@ to the closest surviving fly.
       
 2. Anurag Koul - ma-gym: Collection of multi-agent environments based 
    on OpenAI gym (2019). Web: https://github.com/koulanurag/ma-gym
+
+3. Multiagent Reinforcement Learning: Rollout and Policy Iteration. Web: https://github.com/cor3bit/bertsekas-marl 
    
