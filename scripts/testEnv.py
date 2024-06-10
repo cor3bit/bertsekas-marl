@@ -1,5 +1,6 @@
 from gym.envs.registration import register
 import ma_gym.envs.predator_prey.predator_prey
+import time
 
 register(
     id='PredatorPrey10x10-v4',
@@ -62,21 +63,17 @@ def create_agents(
 import matplotlib.pyplot as plt
 import numpy as np
 
-def visualize_image(img: np.ndarray):
-    """
-    Visualizes the image using matplotlib.
-    
-    Parameters:
-    img (np.ndarray): The image to be visualized.
-    """
-    # Check if the image is a valid NumPy array
+
+def visualize_image(img: np.ndarray, pause_time: float = 0.5):
+
     if not isinstance(img, np.ndarray):
         raise ValueError("The provided image is not a valid NumPy array")
 
-    # Display the image using matplotlib
     plt.imshow(img)
-    plt.axis('off')  # Hide the axes
-    plt.show()
+    plt.axis('off') 
+    plt.show(block=False) 
+    plt.pause(pause_time)  
+    plt.close()  
 
 
 
@@ -90,12 +87,36 @@ if __name__ == '__main__':
     # env = Monitor(env, directory='../artifacts/recordings', force=True,)
 
     for i_episode in tqdm(range(N_EPISODES)):
-        obs_n = env.reset_default()
+        #bs_n = env.reset_default()
+        obs_n = env.reset()
 
         print(obs_n)
         imgs = env.render()
         visualize_image(imgs)
 
         agents = create_agents(env, AGENT_TYPE)
+        done_n = [False] * env.n_agents
+        total_reward = 0.
+
+        # run an episode until all prey is caught
+        while not all(done_n):
+            prev_actions = {}
+            act_n = []
+            for i, (agent, obs) in enumerate(zip(agents, obs_n)):
+                action_id = agent.act(obs, prev_actions=prev_actions)
+
+                prev_actions[i] = action_id
+                act_n.append(action_id)
+
+            # update step
+            obs_n, reward_n, done_n, info = env.step(act_n)
+
+            total_reward += np.sum(reward_n)
+            print(total_reward)
+
+            imgs = env.render()
+            visualize_image(imgs)
+
+            time.sleep(0.5)
 
 
