@@ -33,14 +33,15 @@ class PredatorPrey(gym.Env):
     def __init__(
             self,
             grid_shape=(10, 10),
-            n_agents=2,
-            n_preys=1,
+            n_agents=4,
+            n_preys=2,
             prey_move_probs=(0.2, 0.2, 0.2, 0.2, 0.2),
             # penalty=1,  # initially -0.5; here we assume no penalty for catching the prey solo
             step_cost=-1,
             prey_capture_reward=0,
             max_steps=200):
         self._grid_shape = grid_shape
+        self.grid_shape = grid_shape
         self.n_agents = n_agents
         self.n_preys = n_preys
         self._max_steps = max_steps
@@ -113,8 +114,11 @@ class PredatorPrey(gym.Env):
         # all agents' position
         for agent_i in range(self.n_agents):
             pos = self.agent_pos[agent_i]
-            _agent_i_obs = [pos[0] / (self._grid_shape[0] - 1), pos[1] / (self._grid_shape[1] - 1)]  # coordinates
+            print(pos)
 
+            _agent_i_obs = [pos[0] / (self._grid_shape[0] - 1), pos[1] / (self._grid_shape[1] - 1)]  # coordinates
+            print("Printing Agent's Observations")
+            print(_agent_i_obs)
             _obs.append(_agent_i_obs)
 
         # all preys' position
@@ -127,6 +131,7 @@ class PredatorPrey(gym.Env):
         # alive status fro prey
         _obs.append([1. if alive else 0. for alive in self._prey_alive])
 
+        #print(_obs)
         # same observations for all agents
         _obs = np.array(_obs).flatten().tolist()
         _obs = [_obs for _ in range(self.n_agents)]
@@ -146,6 +151,9 @@ class PredatorPrey(gym.Env):
         return self.get_agent_obs()
 
     def reset_default(self):
+        print("Number of preys",self.n_preys)
+        print("Number of agents",self.n_agents)
+
         assert self.n_preys == 2
         assert self.n_agents == 4
         assert self._grid_shape == (10, 10)
@@ -397,7 +405,7 @@ class PredatorPrey(gym.Env):
             neighbours.append([pos[0], pos[1] - 1])
         return neighbours
 
-    def render(self, mode='human'):
+    def render(self, mode='rgb_array'):
         img = copy.copy(self._base_img)
 
         for prey_i in range(self.n_preys):
@@ -417,14 +425,16 @@ class PredatorPrey(gym.Env):
                             fill='white', margin=0.4)
 
         img = np.asarray(img)
-        if mode == 'rgb_array':
-            return img
-        elif mode == 'human':
-            from gym.envs.classic_control import rendering
-            if self.viewer is None:
-                self.viewer = rendering.SimpleImageViewer()
-            self.viewer.imshow(img)
-            return self.viewer.isopen
+        #print(img)
+        return img
+        # if mode == 'rgb_array':
+        #     return img
+        # elif mode == 'human':
+        #     from gym.envs.classic_control import rendering
+        #     if self.viewer is None:
+        #         self.viewer = rendering.SimpleImageViewer()
+        #     self.viewer.imshow(img)
+        #     return self.viewer.isopen
 
     def seed(self, n=None):
         self.np_random, seed = seeding.np_random(n)

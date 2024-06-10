@@ -56,7 +56,8 @@ class QnetBasedAgent(Agent):
             qnet_name: str = None
     ) -> QNetworkCoordinated:
         net = QNetworkCoordinated(self._m_agents, self._p_preys, self._action_space.n)
-        net.load_state_dict(torch.load(qnet_name))
+        #net.load_state_dict(torch.load(qnet_name))
+        net.load_state_dict(torch.load(qnet_name, map_location=torch.device('cpu')))
 
         # set dropout and batch normalization layers to evaluation mode
         net.eval()

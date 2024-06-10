@@ -1,7 +1,7 @@
 SpiderAndFlyEnv = 'PredatorPrey10x10-v4'
-BaselineModelPath_10x10_4v2 = '../artifacts/baseline_policy_10x10_4v2.pt'
-RolloutModelPath_10x10_4v2 = '../artifacts/rollout_policy_10x10_4v2.pt'
-RepeatedRolloutModelPath_10x10_4v2 = '../artifacts/repeated_rollout_policy_10x10_4v2.pt'
+BaselineModelPath_10x10_4v2 = 'artifacts/baseline_policy_10x10_4v2.pt'
+RolloutModelPath_10x10_4v2 = 'artifacts/rollout_policy_10x10_4v2.pt'
+RepeatedRolloutModelPath_10x10_4v2 = 'artifacts/repeated_rollout_policy_10x10_4v2.pt'
 
 
 class AgentType:
