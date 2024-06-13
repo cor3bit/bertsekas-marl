@@ -26,7 +26,7 @@ AGENT_TYPE = AgentType.QNET_BASED
 QNET_TYPE = QnetType.BASELINE
 BASIS_AGENT_TYPE = AgentType.RULE_BASED
 N_SIMS = 10
-
+SEED = 42
 
 
 from tqdm import tqdm
@@ -75,7 +75,45 @@ def visualize_image(img: np.ndarray, pause_time: float = 0.5):
     plt.pause(pause_time)  
     plt.close()  
 
+def run_agent(agent_type: str):
+    # create Spider-and-Fly game
+    env = gym.make(SpiderAndFlyEnv)
+    env.seed(SEED)
 
+    avg_reward = 0.
+
+    for _ in tqdm(range(N_EPISODES)):
+        # init env
+        obs_n = env.reset()
+        # obs_n = env.reset_default()
+
+        # init agents
+        
+        agents = create_agents(env, agent_type)
+
+        # init stopping condition
+        done_n = [False] * env.n_agents
+
+        # run an episode until all prey is caught
+        while not all(done_n):
+            prev_actions = {}
+            act_n = []
+            for i, (agent, obs) in enumerate(zip(agents, obs_n)):
+                action_id = agent.act(obs, prev_actions=prev_actions)
+
+                prev_actions[i] = action_id
+                act_n.append(action_id)
+
+            # update step
+            obs_n, reward_n, done_n, info = env.step(act_n)
+            avg_reward += np.sum(reward_n)
+
+    env.close()
+
+    avg_reward /= env.n_agents
+    avg_reward /= N_EPISODES
+
+    return avg_reward
 
 
 if __name__ == '__main__':
@@ -90,9 +128,9 @@ if __name__ == '__main__':
         #bs_n = env.reset_default()
         obs_n = env.reset()
 
-        print(obs_n)
+        #print(obs_n)
         imgs = env.render()
-        visualize_image(imgs)
+        #visualize_image(imgs)
 
         agents = create_agents(env, AGENT_TYPE)
         done_n = [False] * env.n_agents
