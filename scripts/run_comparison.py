@@ -58,6 +58,7 @@ def run_agent(agent_type: str):
         # obs_n = env.reset_default()
 
         # init agents
+        
         agents = create_agents(env, agent_type)
 
         # init stopping condition
@@ -131,12 +132,14 @@ if __name__ == '__main__':
 
     # AgentType.RULE_BASED, AgentType.SEQ_MA_ROLLOUT, AgentType.QNET_BASED
     for agent_type in [AgentType.QNET_BASED]:
-        print(f'Running {agent_type} Agent.')
-        avg_reward = run_agent(agent_type)
-        print(f'Avg reward for {agent_type} Agent on {N_EPISODES} episodes: {avg_reward}.')
 
-    if WITH_STD_ROLLOUT:
-        agent_type = AgentType.STD_MA_ROLLOUT
         print(f'Running {agent_type} Agent.')
-        run_std_ma_agent()
-        print(f'Avg reward for {agent_type} Agent on {N_EPISODES} episodes: {avg_reward}.')
+
+    #     avg_reward = run_agent(agent_type)
+    #     print(f'Avg reward for {agent_type} Agent on {N_EPISODES} episodes: {avg_reward}.')
+
+    # if WITH_STD_ROLLOUT:
+    #     agent_type = AgentType.STD_MA_ROLLOUT
+    #     print(f'Running {agent_type} Agent.')
+    #     run_std_ma_agent()
+    #     print(f'Avg reward for {agent_type} Agent on {N_EPISODES} episodes: {avg_reward}.')

@@ -1,5 +1,4 @@
 from typing import List, Tuple
-
 import numpy as np
 import gym
 import ma_gym
@@ -24,7 +23,7 @@ class RuleBasedAgent(Agent):
 
         # keep env to access specific method
         self._model = gym.make(SpiderAndFlyEnv)
-        assert self._model._grid_shape == grid_shape
+        assert self._model.grid_shape == grid_shape
 
     def act(
             self,
@@ -41,6 +40,8 @@ class RuleBasedAgent(Agent):
         curr_pos = self._get_agent_pos(obs)
         alive_prey_coords = self._get_alive_prey_coords(obs)
         action_distances = self._get_action_distances(curr_pos, alive_prey_coords)
+        #print("printing action dists")
+        #print(action_distances)
 
         return action_distances.argmin(), action_distances
 
@@ -53,7 +54,7 @@ class RuleBasedAgent(Agent):
 
         action_distances = np.full((n_actions,), fill_value=np.inf, dtype=np.float32)
         for action_id in range(n_actions):
-            next_pos = self._model._apply_action(curr_pos, action_id)
+            next_pos = self._model.apply_action(curr_pos, action_id)
             if next_pos is not None:
                 min_d = np.inf
                 for alive_prey_row, alive_prey_col in alive_prey_coords:
@@ -69,7 +70,7 @@ class RuleBasedAgent(Agent):
             self,
             pos_scaled: Tuple[np.float32, np.float32],
     ) -> Tuple[int, int]:
-        grid_row, grid_col = self._model._grid_shape
+        grid_row, grid_col = self._model.grid_shape
         row_pos_scaled, col_pos_scaled = pos_scaled
         row_pos = int(np.round((grid_row - 1) * row_pos_scaled, 0))
         col_pos = int(np.round((grid_col - 1) * col_pos_scaled, 0))

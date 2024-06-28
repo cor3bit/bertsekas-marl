@@ -1,7 +1,11 @@
 import time
 from typing import List
+import cv2
+import warnings
+import logging
 
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 import numpy as np
 import gym
 import ma_gym  # register new envs on import
@@ -10,11 +14,49 @@ from ma_gym.wrappers.monitor import Monitor
 from src.constants import SpiderAndFlyEnv, AgentType
 from src.agent_std_rollout import StdRolloutMultiAgent
 
-N_EPISODES = 1
+N_EPISODES = 10
 N_SIMS_PER_MC = 50
+
+from gym.envs.registration import register
+
+register(
+    id='PredatorPrey10x10-v4',
+    entry_point='ma_gym.envs.predator_prey.predator_prey:PredatorPrey',
+    max_episode_steps=1000,
+    reward_threshold=1.0,
+)
+gym.logger.set_level(logging.ERROR)  # Set gym logger level to ERROR
+
+warnings.filterwarnings("ignore", category=UserWarning, module="gym")  # Ignore UserWarnings from gym
+
+
+def create_movie_clip(frames: list, output_file: str, fps: int = 10):
+    # Assuming all frames have the same shape
+    height, width, layers = frames[0].shape
+    size = (width, height)
+    
+    out = cv2.VideoWriter(output_file, cv2.VideoWriter_fourcc(*'mp4v'), fps, size)
+    
+    for frame in frames:
+        out.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+    
+    out.release()
+
+def visualize_image(img: np.ndarray, pause_time: float = 0.5):
+
+    if not isinstance(img, np.ndarray):
+        raise ValueError("The provided image is not a valid NumPy array")
+
+    plt.imshow(img)
+    plt.axis('off') 
+    plt.show(block=False) 
+    plt.pause(pause_time)  
+    plt.close() 
+
 
 if __name__ == '__main__':
     np.random.seed(42)
+    frames = []
 
     # create Spider-and-Fly game
     env = gym.make(SpiderAndFlyEnv)
@@ -24,6 +66,7 @@ if __name__ == '__main__':
     for i_episode in tqdm(range(N_EPISODES)):
         # init env
         # obs_n = env.reset()
+        obs_n = env.reset()
         obs_n = env.reset_default()
         env.render()
 
@@ -49,11 +92,15 @@ if __name__ == '__main__':
             obs_n, reward_n, done_n, info = env.step(act_n)
 
             total_reward += np.sum(reward_n)
+            imgs = env.render()
+            visualize_image(imgs)
+            frames.append(imgs)
 
             # time.sleep(0.5)
             env.render()
 
         print(f'Episode {i_episode}: Avg Reward is {total_reward / env.n_agents}')
+        create_movie_clip(frames, 'standardMARollout.mp4', fps=10)
 
     # time.sleep(2.)
 

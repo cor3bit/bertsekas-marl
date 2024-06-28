@@ -112,6 +112,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+spider/
 
 # Spyder project settings
 .spyderproject
@@ -161,3 +162,6 @@ dmypy.json
 *.pre
 *.snm
 *.vrb
+
+# Files
+*.mp4

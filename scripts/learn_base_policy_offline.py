@@ -49,11 +49,12 @@ def generate_samples(n_samples, seed):
             done_n = [False] * m_agents
 
             # run 100 episodes for a random agent
+            # run while all agents are done (done_n = True)
             while not all(done_n):
                 # for each agent calculates Manhattan Distance to each prey for each
 
                 # transform into samples
-                obs_first = np.array(obs_n[0], dtype=np.float32).flatten()  # same for all agent
+                obs_first = np.array(obs_n[0], dtype=np.float32).flatten()  # same for all agent (Fully observable)
 
                 act_n = []
                 for i, (agent, obs) in enumerate(zip(agents, obs_n)):
@@ -90,6 +91,7 @@ def train_qnetwork(samples):
 
     print(f'Found device: {device}.')
 
+    # agents, preys, action size
     net = QNetwork(M_AGENTS, P_PREY, 5)
 
     net.to(device)

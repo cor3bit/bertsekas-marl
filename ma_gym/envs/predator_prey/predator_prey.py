@@ -114,7 +114,7 @@ class PredatorPrey(gym.Env):
         # all agents' position
         for agent_i in range(self.n_agents):
             pos = self.agent_pos[agent_i]
-            print(pos)
+            #print(pos)
 
             _agent_i_obs = [pos[0] / (self._grid_shape[0] - 1), pos[1] / (self._grid_shape[1] - 1)]  # coordinates
             #print("Printing Agent's Observations")
@@ -445,7 +445,7 @@ class PredatorPrey(gym.Env):
             self.viewer.close()
             self.viewer = None
 
-    def _apply_action(self, curr_pos, move):
+    def apply_action(self, curr_pos, move):
         # curr_pos = copy.copy(self.agent_pos[agent_i])
         if move == 0:  # down
             next_pos = [curr_pos[0] + 1, curr_pos[1]]

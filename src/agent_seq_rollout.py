@@ -42,7 +42,8 @@ class SeqRolloutAgent(Agent):
         best_action, action_q_values = self.act_with_info(obs, prev_actions)
         return best_action
 
-    def act_with_info(
+    def act_with_info1(
+            ## with pralallel processing
             self,
             obs: List[float],
             prev_actions: Dict[int, int] = None,
@@ -69,10 +70,46 @@ class SeqRolloutAgent(Agent):
                     self._m_agents,
                     self._agents,
                 ))
-
+            print(futures)
             for f in as_completed(futures):
+                print("printing f")
+                print(f)
                 res = f.result()
                 sim_results.append(res)
+
+        # analyze results of the simulation
+        np_sim_results = np.array(sim_results, dtype=np.float32)
+        np_sim_results_sorted = np_sim_results[np.argsort(np_sim_results[:, 0])]
+        action_q_values = np_sim_results_sorted[:, 1]
+        best_action = np.argmax(action_q_values)
+
+        return best_action, action_q_values
+    
+    def act_with_info(
+            ## without pralallel processing
+            self,
+            obs: List[float],
+            prev_actions: Dict[int, int] = None,
+        ) -> Tuple[int, np.ndarray]:
+        assert prev_actions is not None
+
+        n_actions = self._action_space.n
+
+        # sequential calculations
+        sim_results = []
+
+        for action_id in range(n_actions):
+            # perform simulation
+            res = self._simulate_action_par(
+                self.id,
+                action_id,
+                self._n_sim_per_step,
+                obs,
+                prev_actions,
+                self._m_agents,
+                self._agents,
+            )
+            sim_results.append(res)
 
         # analyze results of the simulation
         np_sim_results = np.array(sim_results, dtype=np.float32)
@@ -122,11 +159,17 @@ class SeqRolloutAgent(Agent):
         first_act_n = np.empty((m_agents,), dtype=np.int8)
         for i in range(m_agents):
             if i in prev_actions:
+                # if ith agent's (other agents) previous action is available
+                # use it for env.step
                 first_act_n[i] = prev_actions[i]
             elif agent_id == i:
+                # if optimization is done for me (not other agents)
+                # use my action for env.step
                 first_act_n[i] = action_id
                 first_step_prev_actions[i] = action_id
             else:
+                # if other agents previous actions are not available
+                # assume action based on base policy
                 underlying_agent = agents[i]
                 assumed_action = underlying_agent.act(obs, prev_actions=first_step_prev_actions)
                 first_act_n[i] = assumed_action
@@ -137,6 +180,7 @@ class SeqRolloutAgent(Agent):
 
         for j in range(n_sims):
             # init env from observation
+            env.reset()
             sim_obs_n = env.reset_from(obs)
 
             # make prescribed first step

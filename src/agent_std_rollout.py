@@ -61,7 +61,7 @@ class StdRolloutMultiAgent(MultiAgent):
     @staticmethod
     def _simulate(
             initial_obs: List[float],
-            initial_step: Tuple,
+            initial_step: Tuple, # config in act_n -> initial actions
             m_agents: int,
             p_preys: int,
             grid_shape: Tuple[int, int],
@@ -79,6 +79,7 @@ class StdRolloutMultiAgent(MultiAgent):
         # run N simulations
         avg_total_reward = .0
         for _ in range(n_sim_per_step):
+            env.reset()
             obs_n = env.reset_from(initial_obs)
 
             # 1 step
