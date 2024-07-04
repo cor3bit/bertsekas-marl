@@ -71,6 +71,9 @@ class StdRolloutMultiAgent(MultiAgent):
         # create env
         env = gym.make(SpiderAndFlyEnv)
 
+        ## Here the agents are created in the order 1 2 3 4 ...
+        ## However an improvement can be done by checking Q values for
+        ## all agents and reordering
         # create agents
         agents = [RuleBasedAgent(i, m_agents,
                                  p_preys, grid_shape, action_space)

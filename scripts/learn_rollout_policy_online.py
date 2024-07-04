@@ -20,6 +20,53 @@ N_SIMS_PER_STEP = 10
 BATCH_SIZE = 512
 EPOCHS = 10
 
+import warnings
+import logging
+import cv2
+import matplotlib.pyplot as plt
+
+
+from gym.envs.registration import register
+
+register(
+    id='PredatorPrey10x10-v4',
+    entry_point='ma_gym.envs.predator_prey.predator_prey:PredatorPrey',
+    max_episode_steps=1000,
+    reward_threshold=1.0,
+)
+
+gym.logger.set_level(logging.ERROR)  # Set gym logger level to ERROR
+
+warnings.filterwarnings("ignore", category=UserWarning, module="gym")  # Ignore UserWarnings from gym
+
+
+
+def create_movie_clip(frames: list, output_file: str, fps: int = 10):
+    # Assuming all frames have the same shape
+    height, width, layers = frames[0].shape
+    size = (width, height)
+    
+    out = cv2.VideoWriter(output_file, cv2.VideoWriter_fourcc(*'mp4v'), fps, size)
+    
+    for frame in frames:
+        out.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+    
+    out.release()
+
+
+
+def visualize_image(img: np.ndarray, pause_time: float = 0.5):
+
+    if not isinstance(img, np.ndarray):
+        raise ValueError("The provided image is not a valid NumPy array")
+
+    plt.imshow(img)
+    plt.axis('off') 
+    plt.show(block=False) 
+    plt.pause(pause_time)  
+    plt.close()  
+
+
 
 def simulate(
         initial_obs: np.array,
@@ -34,9 +81,11 @@ def simulate(
 
     # create env
     env = gym.make(SpiderAndFlyEnv)
+   
 
     # run N simulations
     for _ in range(N_SIMS_PER_STEP):
+        obs_n = env.reset()
         obs_n = env.reset_from(initial_obs)
 
         # 1 step
@@ -189,6 +238,7 @@ def train_qnet(qnet, samples):
 
 
 def learn_policy():
+    frames = []
     np.random.seed(42)
 
     # create Spiders-and-Flies game
@@ -202,7 +252,7 @@ def learn_policy():
     # init env variables
     m_agents = env.n_agents
     p_preys = env.n_preys
-    grid_shape = env._grid_shape
+    #grid_shape = env._grid_shape
     action_space = env.action_space[0]
 
     # rollout net
@@ -230,6 +280,7 @@ def learn_policy():
 
             for agent_id, obs in enumerate(obs_n):
                 n_actions = action_space.n
+                # create the same action space with infinity values filled.
                 q_values = np.full((n_actions,), fill_value=-np.inf, dtype=np.float32)
 
                 new_actions = {}
@@ -293,6 +344,9 @@ def learn_policy():
 
             # update step
             obs_n, reward_n, done_n, info = env.step(act_n)
+            imgs = env.render()
+            visualize_image(imgs)
+            frames.append(imgs)
 
             # update rollout policy with samples
             qnet = train_qnet(qnet, samples)
@@ -302,8 +356,11 @@ def learn_policy():
     # save updated qnet
     torch.save(qnet.state_dict(), RolloutModelPath_10x10_4v2)
 
+    return frames
+ 
 
 # ------------- Runner -------------
 
 if __name__ == '__main__':
-    learn_policy()
+    frames = learn_policy()
+    create_movie_clip(frames, 'onlinePolicyIteration.mp4', fps=10) 
