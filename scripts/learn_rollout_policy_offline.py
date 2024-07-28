@@ -14,6 +14,9 @@ from src.constants import SpiderAndFlyEnv, RolloutModelPath_10x10_4v2, RepeatedR
 from src.qnetwork_coordinated import QNetworkCoordinated
 from src.agent_seq_rollout import SeqRolloutAgent
 
+
+import wandb
+
 SEED = 42
 
 M_AGENTS = 4
@@ -80,6 +83,7 @@ def generate_samples(n_samples, seed):
 
                     obs_first = np.array(obs, dtype=np.float32).flatten()  # same for all agent
                     x = np.concatenate((obs_first, agent_ohe, prev_actions_ohe))
+                    
 
                     samples.append((x, action_q_values))
                     pbar.update(1)
@@ -102,6 +106,7 @@ def generate_samples(n_samples, seed):
 
 
 def train_qnetwork(samples):
+    steps_num = 0
     print('Started Training.')
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -139,6 +144,7 @@ def train_qnetwork(samples):
             outputs = net(inputs)
 
             loss = criterion(outputs, labels)
+            
 
             loss.backward()
 
@@ -146,6 +152,7 @@ def train_qnetwork(samples):
 
             # logging
             running_loss += loss.item()
+            wandb.log({'loss':running_loss},step=epoch) 
             n_batches += 1
 
         print(f'[{epoch}] {running_loss / n_batches:.3f}.')
@@ -164,7 +171,7 @@ if __name__ == '__main__':
     # TODO fix seed
     # np.random.seed(SEED)
     # torch.manual_seed(SEED)
-
+    wandb.init(project="Training_SecurityAndSurveillance",name="Sequential Rollout")
     # collect samples
     t1 = perf_counter()
     train_samples = generate_samples(N_SAMPLES, SEED)
@@ -179,3 +186,5 @@ if __name__ == '__main__':
 
     print(f'Generated samples in {(t2 - t1) / 60.:.2f} min.')
     print(f'Trained in {(t3 - t2) / 60.:.2f} min.')
+
+    

@@ -25,8 +25,8 @@ from src.agent_std_rollout import StdRolloutMultiAgent
 
 
 N_EPISODES = 20
-#AGENT_TYPE = AgentType.QNET_BASED
-AGENT_TYPE = AgentType.SEQ_MA_ROLLOUT
+AGENT_TYPE = AgentType.QNET_BASED
+#GENT_TYPE = AgentType.SEQ_MA_ROLLOUT
 QNET_TYPE = QnetType.REPEATED
 BASIS_AGENT_TYPE = AgentType.RULE_BASED
 N_SIMS = 10
@@ -34,6 +34,10 @@ SEED = 42
 N_SIMS_MC = 50
 
 from tqdm import tqdm
+
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 def create_agents(
         env: gym.Env,
@@ -65,8 +69,7 @@ def create_agents(
     else:
         raise ValueError(f'Unrecognized agent type: {agent_type}.')
 
-import matplotlib.pyplot as plt
-import numpy as np
+
 
 
 def create_movie_clip(frames: list, output_file: str, fps: int = 10):

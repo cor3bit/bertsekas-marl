@@ -9,23 +9,29 @@ import torch.nn as nn
 import torch.optim as optim
 import ma_gym  # register new envs on import
 
-from src.constants import SpiderAndFlyEnv, RepeatedRolloutModelPath_10x10_4v3, RepeatedRolloutModelPath_10x10_4v2, AgentType, \
+from src.constants import SpiderAndFlyEnv, RepeatedRolloutModelPath_10x10_4v4, AgentType, \
     QnetType
 from src.qnetwork_coordinated import QNetworkCoordinated
 from src.agent_seq_rollout import SeqRolloutAgent
+
+import wandb
+import warnings
+
+# Suppress the specific gym warning
+warnings.filterwarnings("ignore", category=UserWarning)
 
 SEED = 42
 
 M_AGENTS = 4
 P_PREY = 2
 
-N_SAMPLES = 50
+N_SAMPLES = 50000
 BATCH_SIZE = 1024
-EPOCHS = 500
+EPOCHS = 1000
 N_SIMS_MC = 50
-FROM_SCRATCH = False
-INPUT_QNET_NAME = RepeatedRolloutModelPath_10x10_4v3
-OUTPUT_QNET_NAME = RepeatedRolloutModelPath_10x10_4v3
+FROM_SCRATCH = True
+INPUT_QNET_NAME = RepeatedRolloutModelPath_10x10_4v4
+OUTPUT_QNET_NAME = RepeatedRolloutModelPath_10x10_4v4
 BASIS_POLICY_AGENT = AgentType.QNET_BASED
 QNET_TYPE = QnetType.BASELINE
 
@@ -74,6 +80,7 @@ def generate_samples(n_samples, seed):
                     agent_ohe[i] = 1.
 
                     prev_actions_ohe = np.zeros(shape=(m_agents * action_space.n,), dtype=np.float32)
+
                     for agent_i, action_i in prev_actions.items():
                         ohe_action_index = int(agent_i * action_space.n) + prev_actions[agent_i]
                         prev_actions_ohe[ohe_action_index] = 1.
@@ -118,7 +125,7 @@ def train_qnetwork(samples):
 
     criterion = nn.MSELoss()
 
-    optimizer = optim.Adam(net.parameters(), lr=0.01)
+    optimizer = optim.Adam(net.parameters(), lr=0.001)
 
     data_loader = torch.utils.data.DataLoader(samples,
                                               batch_size=BATCH_SIZE,
@@ -148,11 +155,10 @@ def train_qnetwork(samples):
             running_loss += loss.item()
             n_batches += 1
 
-        print(f'[{epoch}] {running_loss / n_batches:.3f}.')
+        # wandb.log({'loss':running_loss / n_batches},step=epoch) 
 
-        # save interim results
-        # if epoch % 10 == 0:
-        #     torch.save(net.state_dict(), OUTPUT_QNET_NAME)
+        if epoch % 10 == 0:
+            torch.save(net.state_dict(), OUTPUT_QNET_NAME)
 
     print('Finished Training.')
 
@@ -161,9 +167,10 @@ def train_qnetwork(samples):
 
 if __name__ == '__main__':
     t1 = perf_counter()
-    n_workers = 5
+    n_workers = 10
     chunk = int(N_SAMPLES / n_workers)
     train_samples = []
+    # wandb.init(project="Training_SecurityAndSurveillance",name="Sequential Rollout")
 
     with ProcessPoolExecutor(max_workers=n_workers) as pool:
 
@@ -176,7 +183,7 @@ if __name__ == '__main__':
             train_samples += samples_part
 
 
-    train_samples = generate_samples(N_SAMPLES, SEED)
+    # train_samples = generate_samples(N_SAMPLES, SEED)
 
     t2 = perf_counter()
     net = train_qnetwork(train_samples)
@@ -186,3 +193,6 @@ if __name__ == '__main__':
 
     print(f'Generated samples in {(t2 - t1) / 60.:.2f} min.')
     print(f'Trained in {(t3 - t2) / 60.:.2f} min.')
+
+    # wandb.finish()
+    

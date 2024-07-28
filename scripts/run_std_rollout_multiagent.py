@@ -56,7 +56,7 @@ def visualize_image(img: np.ndarray, pause_time: float = 0.5):
 
 if __name__ == '__main__':
     np.random.seed(42)
-    frames = []
+    
 
     # create Spider-and-Fly game
     env = gym.make(SpiderAndFlyEnv)
@@ -64,6 +64,8 @@ if __name__ == '__main__':
     # env = Monitor(env, directory='../artifacts/recordings', force=True, )
 
     for i_episode in tqdm(range(N_EPISODES)):
+        frames = []
+        epi_steps = 0
         # init env
         # obs_n = env.reset()
         obs_n = env.reset()
@@ -90,17 +92,17 @@ if __name__ == '__main__':
 
             # update step
             obs_n, reward_n, done_n, info = env.step(act_n)
+            epi_steps += 1
 
             total_reward += np.sum(reward_n)
-            imgs = env.render()
-            visualize_image(imgs)
-            frames.append(imgs)
+            # visualize_image(imgs)
+            frames.append(env.render())
 
             # time.sleep(0.5)
             env.render()
 
-        print(f'Episode {i_episode}: Avg Reward is {total_reward / env.n_agents}')
-        create_movie_clip(frames, 'standardMARollout.mp4', fps=10)
+        print(f'Episode {i_episode}: Reward is {total_reward}, with steps {epi_steps}')
+        # create_movie_clip(frames, 'standardMARollout.mp4', fps=10)
 
     # time.sleep(2.)
 

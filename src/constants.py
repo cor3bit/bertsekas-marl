@@ -4,6 +4,7 @@ BaselineModelPath_10x10_4v3 = 'artifacts/baseline_policy_10x10_4v3.pt'
 RolloutModelPath_10x10_4v2 = 'artifacts/rollout_policy_10x10_4v2.pt'
 RepeatedRolloutModelPath_10x10_4v2 = 'artifacts/repeated_rollout_policy_10x10_4v2.pt'
 RepeatedRolloutModelPath_10x10_4v3 = 'artifacts/repeated_rollout_policy_10x10_4v3.pt'
+RepeatedRolloutModelPath_10x10_4v4 = 'artifacts/repeated_rollout_policy_10x10_4v4.pt'
 
 
 class AgentType:
