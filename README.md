@@ -1,16 +1,16 @@
 ## Multiagent Reinforcement Learning: Rollout and Policy Iteration
 
 
-Re-implementation of Implementation of the Multiagent Rollout based on the 
-paper by Dimitri Bertsekas (2021). Originally forked from https://github.com/cor3bit/bertsekas-marl.
-But a few improvements and explorations have been made from there.
+Implementation of the Multiagent Rollout
+based on the 
+paper by Dimitri Bertsekas (2021).
 
 
 ### Environment
+
 Simulation environment follows the rules of the Spiders-and-Flies game as 
 specified in [1]. The environment is adapted from Anurag Koul's ma-gym [2] 
-modifying the PredatorPrey env. A wrapper has been written for a modified environment with 
-modified reward functions to test the online replanning discussed at the end of section V in [1].
+modifying the PredatorPrey env.
 
 
 ### Usage
@@ -21,38 +21,24 @@ modified reward functions to test the online replanning discussed at the end of 
 $ pip install -r requirements.txt
 ```
 
-`scripts` folder is mostly for the implementation from cor3bit.
-All my scripts are present in the main directory.
+- Run the agent simulation from the `scripts` folder:
+May have to add the pwd to the path: eg- 
+export PYTHONPATH=$PYTHONPATH:/path/to/bertsekas-marl
+python3 scripts/run_agent.py
+```
+$ python run_agent.py
 
-- Manhattan distance based agent. (Rule based agent)
-```
-$ python runRuleBasedAgent.py
-```
-
-- Run standard rollout. (All agents at once based on simulated Manhattan distance rules)
-```
-$ python runStandRollout.py
 ```
 
-- Run sequential rollout. (One agent at a time.)
-```
-$ python runSeqRollout.py
-```
+- Run agents' comparison from the `scripts` folder:
 
-- Learn a rolllout policy network from experiences collected at sequential rollout.
 ```
-$ python learnRolloutOffV2.py
+$ python run_comparison.py
 ```
 
-- Run Autonomous Rollout using signaling policy and base policy
-```
-$ python runAutoOffline.py
-```
-
-
-## Results
-
-
+### Results
+Result are published below:
+[WANDB.ai](https://wandb.ai/athmajan-university-of-oulu/SecurityAndSurveillance/reports/Multiagent-Reinforcement-Learning-Rollout-and-Policy-Iteration--Vmlldzo4ODYxNDMx?accessToken=myfjbwjdmpdno7dz0ya9s4ty4f58ik9im0sqv3ki0i640qkhet8e818gffb6rw9m)
 
 ### References
 
