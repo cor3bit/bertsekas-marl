@@ -1,16 +1,16 @@
 ## Multiagent Reinforcement Learning: Rollout and Policy Iteration
 
 
-Implementation of the Multiagent Rollout
-based on the 
-paper by Dimitri Bertsekas (2021).
+Re-implementation of Implementation of the Multiagent Rollout based on the 
+paper by Dimitri Bertsekas (2021). Originally forked from https://github.com/cor3bit/bertsekas-marl.
+But a few improvements and explorations have been made from there.
 
 
 ### Environment
-
 Simulation environment follows the rules of the Spiders-and-Flies game as 
 specified in [1]. The environment is adapted from Anurag Koul's ma-gym [2] 
-modifying the PredatorPrey env.
+modifying the PredatorPrey env. A wrapper has been written for a modified environment with 
+modified reward functions to test the online replanning discussed at the end of section V in [1].
 
 
 ### Usage
@@ -21,20 +21,37 @@ modifying the PredatorPrey env.
 $ pip install -r requirements.txt
 ```
 
-- Run the agent simulation from the `scripts` folder:
-May have to add the pwd to the path: eg- 
-export PYTHONPATH=$PYTHONPATH:/path/to/bertsekas-marl
-python3 scripts/run_agent.py
-```
-$ python run_agent.py
+`scripts` folder is mostly for the implementation from cor3bit.
+All my scripts are present in the main directory.
 
+- Manhattan distance based agent. (Rule based agent)
+```
+$ python runRuleBasedAgent.py
 ```
 
-- Run agents' comparison from the `scripts` folder:
+- Run standard rollout. (All agents at once based on simulated Manhattan distance rules)
+```
+$ python runStandRollout.py
+```
 
+- Run sequential rollout. (One agent at a time.)
 ```
-$ python run_comparison.py
+$ python runSeqRollout.py
 ```
+
+- Learn a rolllout policy network from experiences collected at sequential rollout.
+```
+$ python learnRolloutOffV2.py
+```
+
+- Run Autonomous Rollout using signaling policy and base policy
+```
+$ python runAutoOffline.py
+```
+
+
+## Results
+
 
 
 ### References
